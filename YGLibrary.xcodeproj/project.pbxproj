@@ -6,8 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		106242B52E1D59A800C35C16 /* ReadMe.Txt in Sources */ = {isa = PBXBuildFile; fileRef = 106242B42E1D59A600C35C16 /* ReadMe.Txt */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		106242A32E1D58CA00C35C16 /* YGLibrary.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YGLibrary.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		106242B42E1D59A600C35C16 /* ReadMe.Txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = ReadMe.Txt; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -32,6 +37,7 @@
 		1062429A2E1D58CA00C35C16 = {
 			isa = PBXGroup;
 			children = (
+				106242B42E1D59A600C35C16 /* ReadMe.Txt */,
 				106242A52E1D58CA00C35C16 /* YGLibrary */,
 				106242A42E1D58CA00C35C16 /* Products */,
 			);
@@ -119,6 +125,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				106242B52E1D59A800C35C16 /* ReadMe.Txt in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
