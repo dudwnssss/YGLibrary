@@ -13,6 +13,7 @@ struct SearchListView: View {
             VStack {
                 SearchBarView()
                     .padding(.horizontal, 16)
+                SortFilterView()
                 Spacer()
             }
             .navigationTitle("검색")

@@ -13,6 +13,7 @@ struct FavoriteListView: View {
             VStack {
                 SearchBarView()
                     .padding(.horizontal, 16)
+                SortFilterView()
                 Spacer()
             }
             .navigationTitle("즐겨찾기")
