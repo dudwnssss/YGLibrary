@@ -15,7 +15,7 @@ struct MainTabView: View {
                     Text("검색")
                     Image(systemName: "magnifyingglass")
                 }
-            SearchListView()
+            FavoriteListView()
                 .tabItem {
                     Text("즐겨찾기")
                     Image(systemName: "heart.fill")

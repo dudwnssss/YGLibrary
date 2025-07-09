@@ -9,8 +9,14 @@ import SwiftUI
 
 struct FavoriteListView: View {
     var body: some View {
-        VStack {
-            
+        NavigationStack {
+            VStack {
+                SearchBarView()
+                    .padding(.horizontal, 16)
+                Spacer()
+            }
+            .navigationTitle("즐겨찾기")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }
