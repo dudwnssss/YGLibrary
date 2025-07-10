@@ -21,6 +21,8 @@ struct MainTabView: View {
                     Image(systemName: "heart.fill")
                 }
         }
+        .edgesIgnoringSafeArea(.bottom) // 하단 Safe Area 무시
+        .background(.pink)
     }
 }
 
