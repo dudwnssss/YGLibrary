@@ -1,5 +1,5 @@
 //
-//  Constants.swift
+//  ModuleFactory.swift
 //  YGLibrary
 //
 //  Created by 임영준 on 7/9/25.
@@ -15,6 +15,17 @@ enum Destination {
 
 protocol ModuleFactory {
     func makeModule(for destination: Destination) -> UIViewController
+}
+
+struct ModuleFactoryImpl: ModuleFactory {
+    func makeModule(for destination: Destination) -> UIViewController {
+        switch destination {
+        case .mainTab:
+            return MainTabBarController()
+        case .bookDetail:
+            return UIHostingController(rootView: BookDetailView())
+        }
+    }
 }
 
 //struct ModuleFactoryImpl: ModuleFactory {

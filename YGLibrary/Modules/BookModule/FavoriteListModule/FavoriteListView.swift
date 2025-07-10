@@ -178,35 +178,28 @@ struct FavoriteListView: View {
             status: "정상판매"
         )
     ]
-    @State private var navigationPath = NavigationPath()
-
+    private let router = RouterImpl()
+    
     var body: some View {
-        NavigationStack(path: $navigationPath) {
-            VStack {
-                SearchBarView()
-                    .padding(.horizontal, 16)
-                SortFilterView()
-                List(books) { book in
-                    BookRowView(book: book) {
-                        navigationPath.append("BookDetail")
-                    }
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(.init(top: 6, leading: 8, bottom: 6, trailing: 8))
+        VStack {
+            SearchBarView()
+                .padding(.horizontal, 16)
+            SortFilterView()
+            List(books) { book in
+                BookRowView(book: book) {
+                    router.navigate(to: .bookDetail, type: .push)
                 }
-                .padding(.top, 6)
-                .listStyle(PlainListStyle())
-                .background(Color(uiColor: .systemGray5))
-                .scrollIndicators(.hidden)
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+                .listRowInsets(.init(top: 6, leading: 8, bottom: 6, trailing: 8))
             }
-            .navigationTitle("즐겨찾기")
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationDestination(for: String.self) { value in
-                if value == "BookDetail" {
-                    BookDetailView()
-                }
-            }
+            .padding(.top, 6)
+            .listStyle(PlainListStyle())
+            .background(Color(uiColor: .systemGray5))
+            .scrollIndicators(.hidden)
         }
+        .navigationTitle("즐겨찾기")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

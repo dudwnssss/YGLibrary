@@ -17,7 +17,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window = UIWindow(windowScene: windowScene)
         
         // 여기서 Root ViewController 설정
-        let mainViewController = UIHostingController(rootView: MainTabView())
+        let mainViewController = MainTabBarController()
         window?.rootViewController = mainViewController
         window?.makeKeyAndVisible()
     }
