@@ -7,6 +7,11 @@
 
 import SwiftUI
 
+enum Tab {
+    case search
+    case favorite
+}
+
 struct MainTabView: View {
     var body: some View {
         TabView {
@@ -21,8 +26,6 @@ struct MainTabView: View {
                     Image(systemName: "heart.fill")
                 }
         }
-        .edgesIgnoringSafeArea(.bottom) // 하단 Safe Area 무시
-        .background(.pink)
     }
 }
 

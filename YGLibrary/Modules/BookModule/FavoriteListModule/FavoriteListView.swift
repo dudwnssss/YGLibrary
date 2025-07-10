@@ -178,18 +178,21 @@ struct FavoriteListView: View {
             status: "정상판매"
         )
     ]
-    
+    @State private var navigationPath = NavigationPath()
+
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             VStack {
                 SearchBarView()
                     .padding(.horizontal, 16)
                 SortFilterView()
                 List(books) { book in
-                    BookRowView(book: book)
-                        .listRowSeparator(.hidden)
-                        .listRowBackground(Color.clear)
-                        .listRowInsets(.init(top: 6, leading: 8, bottom: 6, trailing: 8))
+                    BookRowView(book: book) {
+                        navigationPath.append("BookDetail")
+                    }
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(.init(top: 6, leading: 8, bottom: 6, trailing: 8))
                 }
                 .padding(.top, 6)
                 .listStyle(PlainListStyle())
@@ -198,6 +201,11 @@ struct FavoriteListView: View {
             }
             .navigationTitle("즐겨찾기")
             .navigationBarTitleDisplayMode(.inline)
+            .navigationDestination(for: String.self) { value in
+                if value == "BookDetail" {
+                    BookDetailView()
+                }
+            }
         }
     }
 }

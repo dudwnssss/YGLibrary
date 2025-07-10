@@ -28,49 +28,54 @@ struct Book: Identifiable {
 
 struct BookRowView: View {
     let book: Book
+    let onTap: () -> Void
     
     var body: some View {
-        HStack {
-            RoundedRectangle(cornerRadius: 12)
-                .aspectRatio(1.4/2, contentMode: .fit)
-                .foregroundStyle(.gray)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(.black, lineWidth: 1)
-                )
-            VStack(alignment: .leading) {
-                Text("도서")
-                    .font(.subheadline)
-                    .bold()
-                Text(book.title)
-                    .bold()
-                    .font(.title3)
-                Text("출판사 : ")
-                    .bold() +
-                Text(book.publisher)
-                Text("저자 : ")
-                    .bold() +
-                Text("저자")
-                Spacer()
-            }
-            Spacer()
-            VStack {
-                Image(systemName: "heart.fill")
-                    .padding(8)
-                    .background(
-                        Circle()
-                            .foregroundStyle(.gray)
+        Button(action: {
+            onTap()
+        }) {
+            HStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .aspectRatio(1.4/2, contentMode: .fit)
+                    .foregroundStyle(.gray)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(.black, lineWidth: 1)
                     )
+                VStack(alignment: .leading) {
+                    Text("도서")
+                        .font(.subheadline)
+                        .bold()
+                    Text(book.title)
+                        .bold()
+                        .font(.title3)
+                    Text("출판사 : ")
+                        .bold() +
+                    Text(book.publisher)
+                    Text("저자 : ")
+                        .bold() +
+                    Text("저자")
+                    Spacer()
+                }
                 Spacer()
-                Text("N원")
-                    .font(.title2)
-                    .bold()
+                VStack {
+                    Image(systemName: "heart.fill")
+                        .padding(8)
+                        .background(
+                            Circle()
+                                .foregroundStyle(.gray)
+                        )
+                    Spacer()
+                    Text("N원")
+                        .font(.title2)
+                        .bold()
+                }
             }
+            .padding(8)
+            .aspectRatio(3, contentMode: .fit)
+            .background(.white)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
         }
-        .padding(8)
-        .aspectRatio(3, contentMode: .fit)
-        .background(.white)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
 
@@ -89,5 +94,7 @@ struct BookRowView: View {
         thumbnail: "https://search1.kakaocdn.net/thumb/R120x174.q85/?fname=http%3A%2F%2Ft1.daumcdn.net%2Flbook%2Fimage%2F5382910",
         status: "정상판매"
     )
-    BookRowView(book: mockBook)
+    BookRowView(book: mockBook) {
+        
+    }
 }
