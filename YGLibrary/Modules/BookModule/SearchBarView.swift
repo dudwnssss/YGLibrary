@@ -18,7 +18,7 @@ struct SearchBarView: View {
         }
         .padding(16)
         .frame(height: 44)
-        .background(Color.gray)
+        .background(Color(uiColor: .systemGray6))
         .clipShape(RoundedRectangle(cornerRadius: 22))
     }
 }

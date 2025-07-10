@@ -191,9 +191,9 @@ struct FavoriteListView: View {
                         .listRowBackground(Color.clear)
                         .listRowInsets(.init(top: 6, leading: 8, bottom: 6, trailing: 8))
                 }
-                .padding(.vertical, 6)
+                .padding(.top, 6)
                 .listStyle(PlainListStyle())
-                .background(Color(UIColor.systemGray6))
+                .background(Color(uiColor: .systemGray5))
                 .scrollIndicators(.hidden)
             }
             .navigationTitle("즐겨찾기")
