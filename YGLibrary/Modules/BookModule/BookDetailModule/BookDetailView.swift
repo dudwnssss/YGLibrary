@@ -11,11 +11,12 @@ import Dependencies
 
 struct BookDetailView: View {
     @Dependency(\.router) private var router
+    let book: Book
     
     var body: some View {
         YGNavigationView {
             VStack(alignment: .leading) {
-                Text("도서 제목")
+                Text(book.title)
                     .bold()
                     .font(.title2)
                 HStack(alignment: .top, spacing: 8) {
@@ -35,11 +36,11 @@ struct BookDetailView: View {
                         Text("저자 : ")
                             .bold()
                         +
-                        Text("저자")
+                        Text(book.authors.joined(separator: ", "))
                         Text("출판사 : ")
                             .bold()
                         +
-                        Text("출판사")
+                        Text(book.publisher)
                         Text("출간일 : ")
                             .bold()
                         +
@@ -47,7 +48,7 @@ struct BookDetailView: View {
                         Text("isbn : ")
                             .bold()
                         +
-                        Text("isbn")
+                        Text(book.isbn)
                         Text("정상가 : ")
                             .bold()
                         +
@@ -61,15 +62,11 @@ struct BookDetailView: View {
                     Spacer()
                     Spacer()
                     Spacer()
-                    Spacer()
-                    Spacer()
-                    Spacer()
-                    Spacer()
-                    Spacer()
                 }
                 Text("책 소개")
                     .bold()
                     .font(.headline)
+                Text(book.contents)
                 Spacer()
             }
             .ygToolBar {
@@ -79,6 +76,7 @@ struct BookDetailView: View {
                     }) {
                         Image(systemName: "arrow.left")
                     }
+                    .buttonStyle(YGScaleButtonStyle())
                 }
                 YGToolbarItem(placement: .trailing) {
                     Image(systemName: "heart")
@@ -88,9 +86,4 @@ struct BookDetailView: View {
         }
     }
 }
-
-#Preview {
-    BookDetailView()
-}
-
 

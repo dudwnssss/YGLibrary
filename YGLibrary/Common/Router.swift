@@ -7,6 +7,8 @@
 
 import UIKit
 
+import Dependencies
+
 enum NavigationType {
     case push
     case present(style: UIModalPresentationStyle = .automatic)
@@ -22,6 +24,7 @@ protocol Router {
 }
 
 struct RouterImpl: Router {
+    @Dependency(\.moduleFactory) private var factory
     private var currentNavigationController: UINavigationController? {
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let window = windowScene.windows.first,
@@ -31,7 +34,6 @@ struct RouterImpl: Router {
         }
         return selectedNav
     }
-    private let factory = ModuleFactoryImpl()
     
     func navigate(to destination: Destination, type: NavigationType) {
         let vc = factory.makeModule(for: destination)

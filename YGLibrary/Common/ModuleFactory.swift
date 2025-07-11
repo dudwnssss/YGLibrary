@@ -10,7 +10,7 @@ import SwiftUI
 
 enum Destination {
     case mainTab
-    case bookDetail
+    case bookDetail(_ data: Book)
 }
 
 protocol ModuleFactory {
@@ -22,8 +22,8 @@ struct ModuleFactoryImpl: ModuleFactory {
         switch destination {
         case .mainTab:
             return MainTabBarController()
-        case .bookDetail:
-            return UIHostingController(rootView: BookDetailView())
+        case .bookDetail(let book):
+            return UIHostingController(rootView: BookDetailView(book: book))
         }
     }
 }

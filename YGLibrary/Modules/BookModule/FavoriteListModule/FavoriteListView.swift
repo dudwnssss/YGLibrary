@@ -188,7 +188,7 @@ struct FavoriteListView: View {
                 SortFilterView()
                 List(books) { book in
                     BookRowView(book: book) {
-                        router.navigate(to: .bookDetail, type: .push)
+                        router.navigate(to: .bookDetail(book), type: .push)
                     }
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
@@ -198,12 +198,14 @@ struct FavoriteListView: View {
                 .listStyle(PlainListStyle())
                 .background(Color(uiColor: .systemGray5))
                 .scrollIndicators(.hidden)
+                .scrollDismissesKeyboard(.immediately)
             }
             .ygToolBar {
                 YGToolbarItem(placement: .principal) {
                     Text("즐겨찾기")
                 }
             }
+//            .hideKeyboardOnTap()
         }
     }
 }
