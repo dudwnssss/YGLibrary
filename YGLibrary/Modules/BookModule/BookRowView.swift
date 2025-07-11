@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct Book: Identifiable {
+struct Book: Identifiable, Decodable {
     let title: String
     let contents: String
     let url: String
