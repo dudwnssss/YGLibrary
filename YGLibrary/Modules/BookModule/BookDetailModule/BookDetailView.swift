@@ -8,6 +8,7 @@
 import SwiftUI
 
 import Dependencies
+import Kingfisher
 
 struct BookDetailView: View {
     @Dependency(\.router) private var router
@@ -20,18 +21,12 @@ struct BookDetailView: View {
                     .bold()
                     .font(.title2)
                 HStack(alignment: .top, spacing: 8) {
-                    RoundedRectangle(cornerRadius: 12)
+                    KFImage(URL(string: book.thumbnail))
                         .aspectRatio(1.4/2, contentMode: .fit)
                         .foregroundStyle(
                             Color(uiColor: .systemGray5)
                         )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(
-                                    Color(.systemGray3),
-                                    lineWidth: 1
-                                )
-                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
                     VStack(alignment: .leading) {
                         Text("저자 : ")
                             .bold()

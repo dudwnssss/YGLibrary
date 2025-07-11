@@ -8,7 +8,7 @@
 import Foundation
 
 enum BookRequest: Request {
-    case searchBook(query: String, sort: String?, page: Int?, size: Int?, target: Int?)
+    case searchBook(query: String, sort: String?, page: Int?, size: Int?, target: String?)
 
     var baseUrl: URL? {
         switch self {

@@ -7,6 +7,8 @@
 
 import SwiftUI
 
+import Kingfisher
+
 struct Book: Identifiable, Decodable {
     let title: String
     let contents: String
@@ -34,14 +36,12 @@ struct BookRowView: View {
         Button(action: {
             onTap()
         }) {
-            HStack {
-                RoundedRectangle(cornerRadius: 12)
+            HStack(alignment: .top) {
+                KFImage(URL(string: book.thumbnail))
                     .aspectRatio(1.4/2, contentMode: .fit)
                     .foregroundStyle(.gray)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(.black, lineWidth: 1)
-                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+
                 VStack(alignment: .leading) {
                     Text("도서")
                         .font(.subheadline)

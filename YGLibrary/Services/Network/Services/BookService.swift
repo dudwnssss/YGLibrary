@@ -10,20 +10,50 @@ import Foundation
 import Dependencies
 
 protocol BookService: Sendable {
-    func getSearchBook() async throws -> BaseResponse<Book>
+    func getSearchBook(
+        query: String,
+        sort: SearchSortType,
+        page: Int?,
+        size: Int?,
+        target: String?
+    ) async throws -> BaseResponse<Book>
+}
+
+extension BookService {
+    func getSearchBook(
+        query: String,
+        sort: SearchSortType,
+        page: Int? = nil,
+        size: Int? = 20,
+        target: String? = nil
+    ) async throws -> BaseResponse<Book> {
+        return try await getSearchBook(
+            query: query,
+            sort: sort,
+            page: page,
+            size: size,
+            target: target
+        )
+    }
 }
 
 struct BookServiceImpl: BookService {
     @Dependency(\.networkService) private var service
     
-    func getSearchBook() async throws -> BaseResponse<Book> {
+    func getSearchBook(
+        query: String,
+        sort: SearchSortType,
+        page: Int?,
+        size: Int?,
+        target: String?
+    ) async throws -> BaseResponse<Book> {
         return try await service.request(
                 BookRequest.searchBook(
-                    query: "안녕",
-                    sort: nil,
-                    page: nil,
-                    size: nil,
-                    target: nil
+                    query: query,
+                    sort: sort.rawValue,
+                    page: page,
+                    size: size,
+                    target: target
                 )
         )
     }

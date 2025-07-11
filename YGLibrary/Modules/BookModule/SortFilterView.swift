@@ -7,15 +7,15 @@
 
 import SwiftUI
 
-enum SearchSortType {
+enum SearchSortType: String {
     case accuracy
-    case publication
+    case latest
     
     var displayText: String {
         switch self {
         case .accuracy:
             "정확도순"
-        case .publication:
+        case .latest:
             "발간일순"
         }
     }

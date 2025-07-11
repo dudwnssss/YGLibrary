@@ -37,7 +37,11 @@ struct SearchListView: View {
         }
         .task {
             do {
-                let data = try await service.getSearchBook()
+                let data = try await service.getSearchBook(
+                    query: "안녕",
+                    sort: .latest,
+                    page: nil
+                )
                 self.data = data
             } catch {
                 print(error)
