@@ -9,10 +9,12 @@
 /* Begin PBXBuildFile section */
 		1028550B2E20CB5F0057F5EC /* Dependencies in Frameworks */ = {isa = PBXBuildFile; productRef = 1028550A2E20CB5F0057F5EC /* Dependencies */; };
 		1028550E2E20CB700057F5EC /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 1028550D2E20CB700057F5EC /* Kingfisher */; };
+		102855142E20F4F20057F5EC /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 102855132E20F4F20057F5EC /* .gitignore */; };
 		106242B52E1D59A800C35C16 /* ReadMe.Txt in Sources */ = {isa = PBXBuildFile; fileRef = 106242B42E1D59A600C35C16 /* ReadMe.Txt */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		102855132E20F4F20057F5EC /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		106242A32E1D58CA00C35C16 /* YGLibrary.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YGLibrary.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		106242B42E1D59A600C35C16 /* ReadMe.Txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = ReadMe.Txt; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -54,6 +56,7 @@
 		1062429A2E1D58CA00C35C16 = {
 			isa = PBXGroup;
 			children = (
+				102855132E20F4F20057F5EC /* .gitignore */,
 				106242B42E1D59A600C35C16 /* ReadMe.Txt */,
 				106242A52E1D58CA00C35C16 /* YGLibrary */,
 				106242A42E1D58CA00C35C16 /* Products */,
@@ -138,6 +141,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				102855142E20F4F20057F5EC /* .gitignore in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
