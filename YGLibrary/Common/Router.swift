@@ -66,3 +66,16 @@ struct RouterImpl: Router {
         currentNavigationController?.popToRootViewController(animated: animated)
     }
 }
+
+import Dependencies
+
+struct RouterKey: DependencyKey {
+    static let liveValue: Router = RouterImpl()
+}
+
+extension DependencyValues {
+    var router: Router {
+        get { self[RouterKey.self] }
+        set { self[RouterKey.self] = newValue }
+    }
+}

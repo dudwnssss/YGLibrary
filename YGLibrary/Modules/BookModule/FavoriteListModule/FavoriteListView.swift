@@ -181,25 +181,30 @@ struct FavoriteListView: View {
     private let router = RouterImpl()
     
     var body: some View {
-        VStack {
-            SearchBarView()
-                .padding(.horizontal, 16)
-            SortFilterView()
-            List(books) { book in
-                BookRowView(book: book) {
-                    router.navigate(to: .bookDetail, type: .push)
+        YGNavigationView {
+            VStack {
+                SearchBarView()
+                    .padding(.horizontal, 16)
+                SortFilterView()
+                List(books) { book in
+                    BookRowView(book: book) {
+                        router.navigate(to: .bookDetail, type: .push)
+                    }
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(.init(top: 6, leading: 8, bottom: 6, trailing: 8))
                 }
-                .listRowSeparator(.hidden)
-                .listRowBackground(Color.clear)
-                .listRowInsets(.init(top: 6, leading: 8, bottom: 6, trailing: 8))
+                .padding(.top, 6)
+                .listStyle(PlainListStyle())
+                .background(Color(uiColor: .systemGray5))
+                .scrollIndicators(.hidden)
             }
-            .padding(.top, 6)
-            .listStyle(PlainListStyle())
-            .background(Color(uiColor: .systemGray5))
-            .scrollIndicators(.hidden)
+            .ygToolBar {
+                YGToolbarItem(placement: .principal) {
+                    Text("즐겨찾기")
+                }
+            }
         }
-        .navigationTitle("즐겨찾기")
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

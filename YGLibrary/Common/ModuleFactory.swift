@@ -28,13 +28,15 @@ struct ModuleFactoryImpl: ModuleFactory {
     }
 }
 
-//struct ModuleFactoryImpl: ModuleFactory {
-//    func makeModule(for destination: Destination) -> UIViewController {
-//        switch destination {
-//        case .mainTab:
-//            <#code#>
-//        case .bookDetail:
-//            <#code#>
-//        }
-//    }
-//}
+import Dependencies
+
+struct ModuleFactoryKey: DependencyKey {
+    static let liveValue: ModuleFactory = ModuleFactoryImpl()
+}
+
+extension DependencyValues {
+    var moduleFactory: ModuleFactory {
+        get { self[ModuleFactoryKey.self] }
+        set { self[ModuleFactoryKey.self] = newValue }
+    }
+}

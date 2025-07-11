@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1028550B2E20CB5F0057F5EC /* Dependencies in Frameworks */ = {isa = PBXBuildFile; productRef = 1028550A2E20CB5F0057F5EC /* Dependencies */; };
+		1028550E2E20CB700057F5EC /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 1028550D2E20CB700057F5EC /* Kingfisher */; };
 		106242B52E1D59A800C35C16 /* ReadMe.Txt in Sources */ = {isa = PBXBuildFile; fileRef = 106242B42E1D59A600C35C16 /* ReadMe.Txt */; };
 /* End PBXBuildFile section */
 
@@ -41,6 +43,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1028550E2E20CB700057F5EC /* Kingfisher in Frameworks */,
+				1028550B2E20CB5F0057F5EC /* Dependencies in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -84,6 +88,8 @@
 			);
 			name = YGLibrary;
 			packageProductDependencies = (
+				1028550A2E20CB5F0057F5EC /* Dependencies */,
+				1028550D2E20CB700057F5EC /* Kingfisher */,
 			);
 			productName = YGLibrary;
 			productReference = 106242A32E1D58CA00C35C16 /* YGLibrary.app */;
@@ -113,6 +119,10 @@
 			);
 			mainGroup = 1062429A2E1D58CA00C35C16;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				102855092E20CB5F0057F5EC /* XCRemoteSwiftPackageReference "swift-dependencies" */,
+				1028550C2E20CB700057F5EC /* XCRemoteSwiftPackageReference "Kingfisher" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 106242A42E1D58CA00C35C16 /* Products */;
 			projectDirPath = "";
@@ -280,6 +290,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -310,6 +321,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -346,6 +358,38 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		102855092E20CB5F0057F5EC /* XCRemoteSwiftPackageReference "swift-dependencies" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-dependencies.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.9.2;
+			};
+		};
+		1028550C2E20CB700057F5EC /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.4.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		1028550A2E20CB5F0057F5EC /* Dependencies */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 102855092E20CB5F0057F5EC /* XCRemoteSwiftPackageReference "swift-dependencies" */;
+			productName = Dependencies;
+		};
+		1028550D2E20CB700057F5EC /* Kingfisher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1028550C2E20CB700057F5EC /* XCRemoteSwiftPackageReference "Kingfisher" */;
+			productName = Kingfisher;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 1062429B2E1D58CA00C35C16 /* Project object */;
 }

@@ -9,14 +9,19 @@ import SwiftUI
 
 struct SearchListView: View {
     var body: some View {
-        VStack {
-            SearchBarView()
-                .padding(.horizontal, 16)
-            SortFilterView()
-            Spacer()
+        YGNavigationView {
+            VStack {
+                SearchBarView()
+                    .padding(.horizontal, 16)
+                SortFilterView()
+                Spacer()
+            }
+            .ygToolBar {
+                YGToolbarItem(placement: .principal) {
+                    Text("검색")
+                }
+            }
         }
-        .navigationTitle("검색")
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
