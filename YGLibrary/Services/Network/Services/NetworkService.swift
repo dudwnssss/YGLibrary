@@ -15,7 +15,7 @@ struct BaseResponse<T: Decodable>: Decodable {
 struct Meta: Decodable {
     let total_count: Int
     let pageable_count: Int
-    let isEnd: Bool
+    let is_end: Bool
 }
 
 enum NewNetworkError: Error {
@@ -47,8 +47,11 @@ struct NetworkServiceImpl: NetworkService {
         }
         
         let request = configRequest(url: url, request: request)
-        let (data, response) = try await session.data(for: request)
+        NetworkLogger.log(request: request)
         
+        let (data, response) = try await session.data(for: request)
+        NetworkLogger.log(response: response, data: data, error: nil)
+
         return try processResponse(data: data, response: response)
     }
     

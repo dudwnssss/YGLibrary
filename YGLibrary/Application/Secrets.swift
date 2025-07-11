@@ -15,6 +15,6 @@ enum Secrets {
         return value
     }
     
-    static var baseURL: String { getValue(for: "BASE_URL") }
-    static var restAPIKey: String { getValue(for: "REST_API_KEY") }
+    static var baseURL: String { getValue(for: "Base URL") }
+    static var restAPIKey: String { getValue(for: "REST API Key") }
 }

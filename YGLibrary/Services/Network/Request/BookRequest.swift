@@ -57,7 +57,7 @@ enum BookRequest: Request {
         switch self {
         case .searchBook:
             return [
-                "Authorization": Secrets.restAPIKey
+                "Authorization": "KakaoAK \(Secrets.restAPIKey)"
             ]
         }
     }

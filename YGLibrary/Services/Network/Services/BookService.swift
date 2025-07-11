@@ -19,7 +19,7 @@ struct BookServiceImpl: BookService {
     func getSearchBook() async throws -> BaseResponse<Book> {
         return try await service.request(
                 BookRequest.searchBook(
-                    query: "",
+                    query: "안녕",
                     sort: nil,
                     page: nil,
                     size: nil,

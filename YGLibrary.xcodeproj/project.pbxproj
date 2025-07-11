@@ -161,6 +161,8 @@
 /* Begin XCBuildConfiguration section */
 		106242AF2E1D58CB00C35C16 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 106242A52E1D58CA00C35C16 /* YGLibrary */;
+			baseConfigurationReferenceRelativePath = Application/Configuration.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -224,6 +226,8 @@
 		};
 		106242B02E1D58CB00C35C16 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 106242A52E1D58CA00C35C16 /* YGLibrary */;
+			baseConfigurationReferenceRelativePath = Application/Configuration.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
