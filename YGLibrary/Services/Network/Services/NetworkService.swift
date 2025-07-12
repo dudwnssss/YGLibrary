@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct BaseResponse<T: Decodable>: Decodable {
+struct MetaResponse<T: Decodable>: Decodable {
     let meta: Meta
     let documents: [T]
 }

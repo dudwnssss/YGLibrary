@@ -11,6 +11,7 @@ import SwiftUI
 enum Destination {
     case mainTab
     case bookDetail(_ data: Book)
+    case sortBottomSheet(_ sort: SearchSortType, onSortSelected: ((SearchSortType) -> Void))
 }
 
 protocol ModuleFactory {
@@ -24,6 +25,17 @@ struct ModuleFactoryImpl: ModuleFactory {
             return MainTabBarController()
         case .bookDetail(let book):
             return UIHostingController(rootView: BookDetailView(book: book))
+        case .sortBottomSheet(let sort, let onSortSelected):
+            let view = SortBottomSheetView(selectedSort: sort, onSortSelected: onSortSelected)
+            let vc = UIHostingController(rootView: view)
+            if let sheet = vc.sheetPresentationController {
+                sheet.detents = [.custom { _ in
+                    200
+                }]
+                sheet.preferredCornerRadius = 16
+                sheet.prefersGrabberVisible = true
+            }
+            return vc
         }
     }
 }

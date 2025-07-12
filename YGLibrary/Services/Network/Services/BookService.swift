@@ -16,7 +16,7 @@ protocol BookService: Sendable {
         page: Int?,
         size: Int?,
         target: String?
-    ) async throws -> BaseResponse<Book>
+    ) async throws -> MetaResponse<Book>
 }
 
 extension BookService {
@@ -26,7 +26,7 @@ extension BookService {
         page: Int? = nil,
         size: Int? = 20,
         target: String? = nil
-    ) async throws -> BaseResponse<Book> {
+    ) async throws -> MetaResponse<Book> {
         return try await getSearchBook(
             query: query,
             sort: sort,
@@ -46,7 +46,7 @@ struct BookServiceImpl: BookService {
         page: Int?,
         size: Int?,
         target: String?
-    ) async throws -> BaseResponse<Book> {
+    ) async throws -> MetaResponse<Book> {
         return try await service.request(
                 BookRequest.searchBook(
                     query: query,

@@ -7,22 +7,18 @@
 
 import SwiftUI
 
-import Dependencies
-
 struct SearchListView: View {
-    @Dependency(\.bookService) private var service
-    @Dependency(\.router) private var router
-    @State private var data: BaseResponse<Book>?
+    @ObservedObject private var store = SearchListStore()
     
     var body: some View {
         YGNavigationView {
             VStack {
                 SearchBarView()
                     .padding(.horizontal, 16)
-                SortFilterView()
-                List(data?.documents ?? []) { book in
+                SortFilterView(store: store)
+                List(store.data?.documents ?? []) { book in
                     BookRowView(book: book) {
-                        router.navigate(to: .bookDetail(book), type: .push)
+                        store.dispatch(.navigateToDetail(book))
                     }
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
@@ -34,17 +30,8 @@ struct SearchListView: View {
                     Text("검색")
                 }
             }
-        }
-        .task {
-            do {
-                let data = try await service.getSearchBook(
-                    query: "안녕",
-                    sort: .latest,
-                    page: nil
-                )
-                self.data = data
-            } catch {
-                print(error)
+            .onAppear {
+                store.dispatch(.onAppear)
             }
         }
     }

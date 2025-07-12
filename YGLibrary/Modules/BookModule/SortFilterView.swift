@@ -7,7 +7,9 @@
 
 import SwiftUI
 
-enum SearchSortType: String {
+import Dependencies
+
+enum SearchSortType: String, CaseIterable {
     case accuracy
     case latest
     
@@ -36,6 +38,8 @@ enum FavoriteSortType {
 }
 
 struct SortFilterView: View {
+    @Dependency(\.router) private var router
+    @ObservedObject var store: SearchListStore
     private let placeholder: String = "제목 또는 저자를 입력하세요"
     
     var body: some View {
@@ -67,27 +71,55 @@ struct SortFilterView: View {
     }
     
     private var sortButton: some View {
-        Button(action: {
-            
-        }) {
-            HStack {
-                Image(systemName: "arrow.up.arrow.down")
-                Text("정렬")
+        Button(
+            action: {
+                router.navigate(
+                    to: .sortBottomSheet(store.sortType) { sort in
+                        store.dispatch(.sort(sort))
+                    },
+                    type: .present(style: .automatic))
+            }) {
+                HStack {
+                    Image(systemName: "arrow.up.arrow.down")
+                    Text("정렬")
+                }
+                .padding(.horizontal, 8)
+                .frame(height: 32)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(lineWidth: 1)
+                }
             }
-            .padding(.horizontal, 8)
-            .frame(height: 32)
-            .overlay {
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(lineWidth: 1)
-            }
-        }
     }
 }
-            
-#Preview {
-    SortFilterView()
+
+struct SortBottomSheetView: View {
+    let selectedSort: SearchSortType
+    let onSortSelected: (SearchSortType) -> Void
+    @Dependency(\.router) private var router
+    
+    var body: some View {
+        VStack(alignment: .leading) {
+            Text("정렬")
+                .font(.headline)
+            ForEach(SearchSortType.allCases, id: \.rawValue) { sort in
+                Button {
+                    onSortSelected(sort)
+                    router.dismiss(animated: true)
+                } label: {
+                    HStack {
+                        Text(sort.displayText)
+                        Spacer()
+                        if selectedSort == sort {
+                            Image(systemName: "checkmark")
+                                .foregroundStyle(.blue)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+                .buttonStyle(YGScaleButtonStyle())
+            }
+        }
+        .padding(.horizontal, 16)
+    }
 }
-
-
-
-

@@ -185,7 +185,7 @@ struct FavoriteListView: View {
             VStack {
                 SearchBarView()
                     .padding(.horizontal, 16)
-                SortFilterView()
+//                SortFilterView()
                 List(books) { book in
                     BookRowView(book: book) {
                         router.navigate(to: .bookDetail(book), type: .push)
