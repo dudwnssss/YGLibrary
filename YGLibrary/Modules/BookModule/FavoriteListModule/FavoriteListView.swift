@@ -189,6 +189,8 @@ struct FavoriteListView: View {
                 List(books) { book in
                     BookRowView(book: book) {
                         router.navigate(to: .bookDetail(book), type: .push)
+                    } onLike: {
+                        
                     }
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)

@@ -17,6 +17,7 @@ final class SearchListStore: Store {
         case sort(SearchSortType)
         case search(String)
         case loadNextPage
+        case save(Book)
     }
     
     struct State {
@@ -67,6 +68,9 @@ final class SearchListStore: Store {
             guard state.canLoadMore else { return }
             state.currentPage += 1
             Task { await loadData(isLoadingMore: true) }
+        
+        case .save(let book):
+            print(book)
         }
     }
     
