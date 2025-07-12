@@ -10,6 +10,7 @@
 		1028550B2E20CB5F0057F5EC /* Dependencies in Frameworks */ = {isa = PBXBuildFile; productRef = 1028550A2E20CB5F0057F5EC /* Dependencies */; };
 		1028550E2E20CB700057F5EC /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 1028550D2E20CB700057F5EC /* Kingfisher */; };
 		102855142E20F4F20057F5EC /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 102855132E20F4F20057F5EC /* .gitignore */; };
+		102855282E22B19F0057F5EC /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 102855272E22B19F0057F5EC /* GRDB */; };
 		106242B52E1D59A800C35C16 /* ReadMe.Txt in Sources */ = {isa = PBXBuildFile; fileRef = 106242B42E1D59A600C35C16 /* ReadMe.Txt */; };
 /* End PBXBuildFile section */
 
@@ -45,6 +46,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				102855282E22B19F0057F5EC /* GRDB in Frameworks */,
 				1028550E2E20CB700057F5EC /* Kingfisher in Frameworks */,
 				1028550B2E20CB5F0057F5EC /* Dependencies in Frameworks */,
 			);
@@ -93,6 +95,7 @@
 			packageProductDependencies = (
 				1028550A2E20CB5F0057F5EC /* Dependencies */,
 				1028550D2E20CB700057F5EC /* Kingfisher */,
+				102855272E22B19F0057F5EC /* GRDB */,
 			);
 			productName = YGLibrary;
 			productReference = 106242A32E1D58CA00C35C16 /* YGLibrary.app */;
@@ -125,6 +128,7 @@
 			packageReferences = (
 				102855092E20CB5F0057F5EC /* XCRemoteSwiftPackageReference "swift-dependencies" */,
 				1028550C2E20CB700057F5EC /* XCRemoteSwiftPackageReference "Kingfisher" */,
+				102855262E22B19F0057F5EC /* XCRemoteSwiftPackageReference "GRDB.swift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 106242A42E1D58CA00C35C16 /* Products */;
@@ -384,6 +388,14 @@
 				minimumVersion = 8.4.0;
 			};
 		};
+		102855262E22B19F0057F5EC /* XCRemoteSwiftPackageReference "GRDB.swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/groue/GRDB.swift.git";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -396,6 +408,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 1028550C2E20CB700057F5EC /* XCRemoteSwiftPackageReference "Kingfisher" */;
 			productName = Kingfisher;
+		};
+		102855272E22B19F0057F5EC /* GRDB */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 102855262E22B19F0057F5EC /* XCRemoteSwiftPackageReference "GRDB.swift" */;
+			productName = GRDB;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
