@@ -12,10 +12,18 @@ struct MetaResponse<T: Decodable>: Decodable {
     let documents: [T]
 }
 
-struct Meta: Decodable {
-    let total_count: Int
-    let pageable_count: Int
-    let is_end: Bool
+extension MetaResponse {
+    struct Meta: Decodable {
+        let totalCount: Int
+        let pageableCount: Int
+        let isEnd: Bool
+        
+        enum CodingKeys: String, CodingKey {
+            case totalCount = "total_count"
+            case pageableCount = "pageable_count"
+            case isEnd = "is_end"
+        }
+    }
 }
 
 enum NewNetworkError: Error {

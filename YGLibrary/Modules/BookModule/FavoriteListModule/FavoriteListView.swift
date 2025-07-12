@@ -183,8 +183,8 @@ struct FavoriteListView: View {
     var body: some View {
         YGNavigationView {
             VStack {
-                SearchBarView()
-                    .padding(.horizontal, 16)
+//                SearchBarView()
+//                    .padding(.horizontal, 16)
 //                SortFilterView()
                 List(books) { book in
                     BookRowView(book: book) {
