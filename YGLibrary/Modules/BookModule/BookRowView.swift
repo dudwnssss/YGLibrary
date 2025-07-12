@@ -9,25 +9,6 @@ import SwiftUI
 
 import Kingfisher
 
-struct Book: Identifiable, Decodable {
-    let title: String
-    let contents: String
-    let url: String
-    let isbn: String
-    let datetime: String
-    let authors: [String]
-    let publisher: String
-    let translators: [String]
-    let price: Int
-    let sale_price: Int
-    let thumbnail: String
-    let status: String
-    
-    var id: String {
-        return isbn
-    }
-}
-
 struct BookRowView: View {
     let book: Book
     let onTap: () -> Void
@@ -38,7 +19,7 @@ struct BookRowView: View {
             onTap()
         }) {
             HStack(alignment: .top) {
-                KFImage(URL(string: book.thumbnail))
+                KFImage(book.thumbnail)
                     .aspectRatio(1.4/2, contentMode: .fit)
                     .foregroundStyle(.gray)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -71,7 +52,7 @@ struct BookRowView: View {
                             )
                     }
                     Spacer()
-                    Text("N원")
+                    Text(book.pricing.displayOriginPrice)
                         .font(.title2)
                         .bold()
                 }

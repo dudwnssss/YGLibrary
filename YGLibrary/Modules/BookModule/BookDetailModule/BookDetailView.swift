@@ -21,7 +21,7 @@ struct BookDetailView: View {
                     .bold()
                     .font(.title2)
                 HStack(alignment: .top, spacing: 8) {
-                    KFImage(URL(string: book.thumbnail))
+                    KFImage(book.thumbnail)
                         .aspectRatio(1.4/2, contentMode: .fit)
                         .foregroundStyle(
                             Color(uiColor: .systemGray5)
@@ -47,11 +47,11 @@ struct BookDetailView: View {
                         Text("정상가 : ")
                             .bold()
                         +
-                        Text("N원")
+                        Text(book.pricing.displayOriginPrice)
                         Text("할인가 : ")
                             .bold()
                         +
-                        Text("N원")
+                        Text(book.pricing.displaySalePrice)
                     }
                     Spacer()
                     Spacer()

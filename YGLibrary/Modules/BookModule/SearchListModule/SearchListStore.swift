@@ -22,7 +22,7 @@ final class SearchListStore: Store {
     
     struct State {
         var books: [Book] = []
-        var meta: MetaResponse<Book>.Meta?
+        var meta: MetaResponse<BookDTO>.Meta?
         var sortType: SearchSortType = .accuracy
         var isLoading: Bool = false
         var isLoadingMore: Bool = false
@@ -112,9 +112,9 @@ final class SearchListStore: Store {
             state.meta = response.meta
             
             if isLoadingMore {
-                state.books.append(contentsOf: response.documents)
+                state.books.append(contentsOf: response.documents.map { Book(from: $0) })
             } else {
-                state.books = response.documents
+                state.books = response.documents.map { Book(from: $0) }
             }
             
         } catch {
