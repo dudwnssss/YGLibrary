@@ -11,63 +11,62 @@ struct SearchListView: View {
     @ObservedObject private var store = SearchListStore()
     
     var body: some View {
-        YGNavigationView {
-            VStack {
-                SearchBarView(query: store.query) { text in
-                    store.dispatch(.search(text))
-                }
-                .padding(.horizontal, 16)
-                
-                SortFilterView(store: store)
-                
-                if store.isLoading {
-                    ProgressView("검색 중...")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if store.books.isEmpty && !store.query.isEmpty {
-                    emptyView
-                } else if store.books.isEmpty {
-                    Text("검색어를 입력해주세요")
-                        .foregroundColor(.gray)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    List {
-                        ForEach(store.books, id: \.isbn) { book in
-                            BookRowView(
-                                book: book,
-                                onTap: {
-                                    store.dispatch(.navigateToDetail(book))
-                                },
-                                onLike: {
-                                    store.dispatch(.save(book))
-                                }
-                            )
-                            .listRowSeparator(.hidden)
-                            .listRowBackground(Color.clear)
-                            .listRowInsets(.init(top: 6, leading: 8, bottom: 6, trailing: 8))
-                            .onAppear {
-                                if book.isbn == store.books.last?.isbn {
-                                    store.dispatch(.loadNextPage)
-                                }
+        VStack {
+            SearchBarView(query: store.query) { text in
+                store.dispatch(.search(text))
+            }
+            .padding(.horizontal, 16)
+            
+            SortFilterView(store: store)
+            
+            if store.isLoading {
+                ProgressView("검색 중...")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if store.books.isEmpty && !store.query.isEmpty {
+                emptyView
+            } else if store.books.isEmpty {
+                Text("검색어를 입력해주세요")
+                    .foregroundColor(.gray)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                List {
+                    ForEach(store.books, id: \.isbn) { book in
+                        BookRowView(
+                            book: book,
+                            isFavorite: store.state.isFavorite(book),
+                            onTap: {
+                                store.dispatch(.navigateToDetail(book))
+                            },
+                            onFavoriteToggle: {
+                                store.dispatch(.toggleFavorite(book))
                             }
-                        }
-                        if store.isLoadingMore {
-                            HStack {
-                                Spacer()
-                                ProgressView()
-                                    .padding()
-                                Spacer()
+                        )
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                        .listRowInsets(.init(top: 6, leading: 8, bottom: 6, trailing: 8))
+                        .onAppear {
+                            if book.isbn == store.books.last?.isbn {
+                                store.dispatch(.loadNextPage)
                             }
-                            .listRowSeparator(.hidden)
-                            .listRowBackground(Color.clear)
                         }
                     }
-                    .scrollDismissesKeyboard(.immediately)
+                    if store.isLoadingMore {
+                        HStack {
+                            Spacer()
+                            ProgressView()
+                                .padding()
+                            Spacer()
+                        }
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                    }
                 }
+                .scrollDismissesKeyboard(.immediately)
             }
-            .ygToolBar {
-                YGToolbarItem(placement: .principal) {
-                    Text("검색")
-                }
+        }
+        .ygToolbar {
+            .principal {
+                Text("검색")
             }
         }
     }

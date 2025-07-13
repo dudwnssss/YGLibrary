@@ -15,6 +15,7 @@ enum Destination {
 }
 
 protocol ModuleFactory {
+    @MainActor
     func makeModule(for destination: Destination) -> UIViewController
 }
 
@@ -23,8 +24,13 @@ struct ModuleFactoryImpl: ModuleFactory {
         switch destination {
         case .mainTab:
             return MainTabBarController()
+            
         case .bookDetail(let book):
-            return UIHostingController(rootView: BookDetailView(book: book))
+            let store = BookDetailStore(book: book)
+            let view = BookDetailView(store: store)
+            let vc = UIHostingController(rootView: view)
+            return vc
+            
         case .sortBottomSheet(let sort, let onSortSelected):
             let view = SortBottomSheetView(selectedSort: sort, onSortSelected: onSortSelected)
             let vc = UIHostingController(rootView: view)

@@ -11,8 +11,9 @@ import Kingfisher
 
 struct BookRowView: View {
     let book: Book
+    let isFavorite: Bool
     let onTap: () -> Void
-    let onLike: () -> Void
+    let onFavoriteToggle: () -> Void
     
     var body: some View {
         Button(action: {
@@ -42,13 +43,14 @@ struct BookRowView: View {
                 Spacer()
                 VStack {
                     Button(action: {
-                        onLike()
+                        onFavoriteToggle()
                     }) {
-                        Image(systemName: "heart.fill")
+                        Image(systemName: isFavorite ? "heart.fill" : "heart")
+                            .foregroundStyle(isFavorite ? .red : .gray)
                             .padding(8)
                             .background(
                                 Circle()
-                                    .foregroundStyle(.gray)
+                                    .foregroundStyle(Color(uiColor: .systemGray6))
                             )
                     }
                     Spacer()

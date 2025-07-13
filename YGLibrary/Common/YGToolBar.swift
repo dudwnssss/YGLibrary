@@ -7,12 +7,13 @@
 
 import SwiftUI
 
-class YGToolbarStorage: ObservableObject {
-    @Published var items: [YGToolbarItem] = []
+enum YGToolbarPlacement {
+    case leading
+    case principal
+    case trailing
 }
 
-struct YGToolbarItem: Identifiable {
-    let id = UUID()
+struct YGToolbarItem {
     let placement: YGToolbarPlacement
     let content: AnyView
     
@@ -22,107 +23,123 @@ struct YGToolbarItem: Identifiable {
     }
 }
 
-enum YGToolbarPlacement {
-    case leading
-    case principal
-    case trailing
-}
-
-struct YGNavigationBar: View {
-    @EnvironmentObject var toolbarStorage: YGToolbarStorage
-    var height: CGFloat
-    
-    init(height: CGFloat = 56) {
-        self.height = height
+@resultBuilder
+struct YGToolbarContentBuilder {
+    static func buildBlock(_ items: YGToolbarItem...) -> [YGToolbarItem] {
+        items
     }
     
+    static func buildOptional(_ item: YGToolbarItem?) -> YGToolbarItem? {
+        item
+    }
+    
+    static func buildEither(first item: YGToolbarItem) -> YGToolbarItem {
+        item
+    }
+    
+    static func buildEither(second item: YGToolbarItem) -> YGToolbarItem {
+        item
+    }
+    
+    static func buildArray(_ items: [YGToolbarItem]) -> [YGToolbarItem] {
+        items
+    }
+    
+    static func buildExpression(_ item: YGToolbarItem) -> YGToolbarItem {
+        item
+    }
+    
+    static func buildExpression<Content: View>(_ content: Content) -> YGToolbarItem {
+        YGToolbarItem(placement: .trailing) { content }
+    }
+}
+
+struct YGToolbar: View {
+    let height: CGFloat
+    let items: [YGToolbarItem]
+    
     private var leadingItems: [YGToolbarItem] {
-        toolbarStorage.items.filter { $0.placement == .leading }
+        items.filter { $0.placement == .leading }
     }
     
     private var principalItems: [YGToolbarItem] {
-        toolbarStorage.items.filter { $0.placement == .principal }
+        items.filter { $0.placement == .principal }
     }
     
     private var trailingItems: [YGToolbarItem] {
-        toolbarStorage.items.filter { $0.placement == .trailing }
+        items.filter { $0.placement == .trailing }
     }
     
     var body: some View {
         ZStack {
-            HStack {
-                ForEach(principalItems) { item in
-                    item.content
+            HStack(spacing: 8) {
+                ForEach(principalItems.indices, id: \.self) { index in
+                    principalItems[index].content
                 }
             }
             
             HStack {
-                HStack {
-                    ForEach(leadingItems) { item in
-                        item.content
+                HStack(spacing: 8) {
+                    ForEach(leadingItems.indices, id: \.self) { index in
+                        leadingItems[index].content
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 
                 Spacer()
                 
-                // Trailing items
-                HStack {
-                    ForEach(trailingItems) { item in
-                        item.content
+                HStack(spacing: 8) {
+                    ForEach(trailingItems.indices, id: \.self) { index in
+                        trailingItems[index].content
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
         .frame(height: height)
-        .padding(.horizontal, 16)
         .background(Color.white)
     }
 }
 
 struct YGToolbarModifier: ViewModifier {
-    @EnvironmentObject var toolbarStorage: YGToolbarStorage
+    let height: CGFloat
     let items: [YGToolbarItem]
     
     func body(content: Content) -> some View {
-        content
-            .onAppear {
-                toolbarStorage.items = items
-            }
+        VStack(spacing: 0) {
+            YGToolbar(height: height, items: items)
+            content
+        }
+        .navigationBarHidden(true)
     }
 }
 
 extension View {
-    func ygToolBar(@YGToolbarBuilder items: () -> [YGToolbarItem]) -> some View {
-        self.modifier(YGToolbarModifier(items: items()))
+    func ygToolbar(
+        height: CGFloat = 56,
+        @YGToolbarContentBuilder content: () -> [YGToolbarItem]
+    ) -> some View {
+        modifier(YGToolbarModifier(height: height, items: content()))
+    }
+    
+    func ygToolbar(
+        height: CGFloat = 56,
+        @YGToolbarContentBuilder content: () -> YGToolbarItem
+    ) -> some View {
+        modifier(YGToolbarModifier(height: height, items: [content()]))
     }
 }
 
-@resultBuilder
-struct YGToolbarBuilder {
-    static func buildBlock(_ components: YGToolbarItem...) -> [YGToolbarItem] {
-        components
-    }
-}
-
-struct YGNavigationView<Content: View>: View {
-    @StateObject private var toolbarStorage = YGToolbarStorage()
-    let content: Content
-    var navigationBarHeight: CGFloat
-    
-    init(navigationBarHeight: CGFloat = 56, @ViewBuilder content: () -> Content) {
-        self.navigationBarHeight = navigationBarHeight
-        self.content = content()
+extension YGToolbarItem {
+    static func leading<Content: View>(@ViewBuilder content: () -> Content) -> YGToolbarItem {
+        YGToolbarItem(placement: .leading, content: content)
     }
     
-    var body: some View {
-        VStack(spacing: 0) {
-            YGNavigationBar(height: navigationBarHeight)
-                .environmentObject(toolbarStorage)
-            content
-                .environmentObject(toolbarStorage)
-        }
-        .navigationBarHidden(true)
+    static func principal<Content: View>(@ViewBuilder content: () -> Content) -> YGToolbarItem {
+        YGToolbarItem(placement: .principal, content: content)
+    }
+    
+    static func trailing<Content: View>(@ViewBuilder content: () -> Content) -> YGToolbarItem {
+        YGToolbarItem(placement: .trailing, content: content)
     }
 }

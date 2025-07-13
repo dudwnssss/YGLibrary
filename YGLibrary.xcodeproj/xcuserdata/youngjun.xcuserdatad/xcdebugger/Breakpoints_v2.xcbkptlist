@@ -7,22 +7,6 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "A2902BFF-7923-4841-BEA6-BD8663DAE2DB"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "YGLibrary/Modules/BookModule/FavoriteListModule/FavoriteListView.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "191"
-            endingLineNumber = "191"
-            landmarkName = "body"
-            landmarkType = "24">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
             uuid = "87B0321A-73C5-426A-8984-CF052331DC8F"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
@@ -82,6 +66,124 @@
             endingLineNumber = "45"
             landmarkName = "init(session:timeout:)"
             landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "D9714363-8C7D-4F45-B80B-8F08B9965B5F"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "YGLibrary/Modules/BookModule/BookDetailModule/BookDetailView.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "48"
+            endingLineNumber = "48"
+            landmarkName = "setSubscription()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "92A531F4-9996-4735-8CF6-03BC5237AAFB"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "YGLibrary/Modules/BookModule/FavoriteListModule/FavoriteListView.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "47"
+            endingLineNumber = "47"
+            landmarkName = "setSubscription()"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "92A531F4-9996-4735-8CF6-03BC5237AAFB - 85baa5bacd0de118"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 (Swift.Set&lt;Swift.String&gt;) -&gt; () in YGLibrary.FavoriteListStore.setSubscription() -&gt; ()"
+                  moduleName = "YGLibrary.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/youngjun/Desktop/YGLibrary/YGLibrary/YGLibrary/Modules/BookModule/FavoriteListModule/FavoriteListView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "47"
+                  endingLineNumber = "47">
+               </Location>
+               <Location
+                  uuid = "92A531F4-9996-4735-8CF6-03BC5237AAFB - 22e8a16ecb9775"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 () async -&gt; Swift.Optional&lt;()&gt; in closure #1 (Swift.Set&lt;Swift.String&gt;) -&gt; () in YGLibrary.FavoriteListStore.setSubscription() -&gt; ()"
+                  moduleName = "YGLibrary.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/youngjun/Desktop/YGLibrary/YGLibrary/YGLibrary/Modules/BookModule/FavoriteListModule/FavoriteListView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "45"
+                  endingLineNumber = "45">
+               </Location>
+               <Location
+                  uuid = "92A531F4-9996-4735-8CF6-03BC5237AAFB - cf77c7dd1cbdb409"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(1) suspend resume partial function for closure #1 () async -&gt; Swift.Optional&lt;()&gt; in closure #1 (Swift.Set&lt;Swift.String&gt;) -&gt; () in YGLibrary.FavoriteListStore.setSubscription() -&gt; ()"
+                  moduleName = "YGLibrary.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/youngjun/Desktop/YGLibrary/YGLibrary/YGLibrary/Modules/BookModule/FavoriteListModule/FavoriteListView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "45"
+                  endingLineNumber = "45">
+               </Location>
+               <Location
+                  uuid = "92A531F4-9996-4735-8CF6-03BC5237AAFB - 6edd551873a771ae"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(2) await resume partial function for closure #1 () async -&gt; Swift.Optional&lt;()&gt; in closure #1 (Swift.Set&lt;Swift.String&gt;) -&gt; () in YGLibrary.FavoriteListStore.setSubscription() -&gt; ()"
+                  moduleName = "YGLibrary.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/youngjun/Desktop/YGLibrary/YGLibrary/YGLibrary/Modules/BookModule/FavoriteListModule/FavoriteListView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "47"
+                  endingLineNumber = "47">
+               </Location>
+               <Location
+                  uuid = "92A531F4-9996-4735-8CF6-03BC5237AAFB - 18504230b6574849"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(3) suspend resume partial function for closure #1 () async -&gt; Swift.Optional&lt;()&gt; in closure #1 (Swift.Set&lt;Swift.String&gt;) -&gt; () in YGLibrary.FavoriteListStore.setSubscription() -&gt; ()"
+                  moduleName = "YGLibrary.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/youngjun/Desktop/YGLibrary/YGLibrary/YGLibrary/Modules/BookModule/FavoriteListModule/FavoriteListView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "47"
+                  endingLineNumber = "47">
+               </Location>
+               <Location
+                  uuid = "92A531F4-9996-4735-8CF6-03BC5237AAFB - da6c572592bb124c"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "YGLibrary.FavoriteListStore.setSubscription() -&gt; ()"
+                  moduleName = "YGLibrary.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/youngjun/Desktop/YGLibrary/YGLibrary/YGLibrary/Modules/BookModule/FavoriteListModule/FavoriteListView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "47"
+                  endingLineNumber = "47">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

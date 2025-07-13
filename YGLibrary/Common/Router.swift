@@ -17,6 +17,7 @@ enum NavigationType {
 }
 
 protocol Router {
+    @MainActor
     func navigate(to: Destination, type: NavigationType)
     func pop(animated: Bool)
     func dismiss(animated: Bool)

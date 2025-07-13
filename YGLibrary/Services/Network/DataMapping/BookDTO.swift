@@ -65,6 +65,21 @@ extension Book {
         self.status = dto.status
     }
     
+    init(from entity: FavoriteBook) {
+        self.id = entity.isbn
+        self.title = entity.title
+        self.contents = entity.contents
+        self.url = entity.url != nil ? URL(string: entity.url!) : nil
+        self.isbn = entity.isbn
+        self.dateTime = entity.dateTime
+        self.authors = entity.authors
+        self.publisher = entity.publisher
+        self.translators = entity.translators
+        self.pricing = .init(originPrice: entity.price, salePrice: entity.salePrice)
+        self.thumbnail = entity.thumbnail != nil ? URL(string: entity.thumbnail!) : nil
+        self.status = entity.status
+    }
+    
     private static func parseDate(from dateString: String) -> Date? {
         let formatter = ISO8601DateFormatter()
         return formatter.date(from: dateString)
