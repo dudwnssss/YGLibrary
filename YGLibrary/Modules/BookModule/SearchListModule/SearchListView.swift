@@ -21,7 +21,7 @@ struct SearchListView: View {
             
             // 정렬/필터
             if !store.books.isEmpty || !store.query.isEmpty {
-                SortFilterView(store: store)
+                SearchSortView(store: store)
             }
             
             // 메인 콘텐츠

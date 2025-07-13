@@ -16,6 +16,7 @@ final class FavoriteListStore: Store {
         case removeFavorite(Book)
         case search(String)
         case sort(FavoriteSortType)
+        case updatePriceFilter(PriceFilter)
     }
 
     struct State {
@@ -26,7 +27,8 @@ final class FavoriteListStore: Store {
         var favoriteISBNs: Set<String> = []
         var query: String = ""              // 검색어
         var sortType: FavoriteSortType = .ascending // 정렬 타입
-        
+        var priceFilter: PriceFilter = PriceFilter() // 가격 필터
+
         func isFavorite(_ book: Book) -> Bool {
             return favoriteISBNs.contains(book.isbn)
         }
@@ -108,21 +110,27 @@ final class FavoriteListStore: Store {
                 book.publisher.localizedCaseInsensitiveContains(state.query)
             }
         }
-        
+        // 가격 필터링
+         if state.priceFilter.isEnabled {
+             filteredBooks = filteredBooks.filter { book in
+                 let price = book.pricing.salePrice > 0 ? book.pricing.salePrice : book.pricing.originPrice
+                 return price >= state.priceFilter.minPrice && price <= state.priceFilter.maxPrice
+             }
+         }
+                                    
         // 정렬
         switch state.sortType {
         case .ascending:
-            filteredBooks = filteredBooks.sorted { $0.title < $1.title }
+            filteredBooks = filteredBooks.sorted {
+                $0.title.localizedStandardCompare($1.title) == .orderedAscending
+            }
         case .descending:
-            filteredBooks = filteredBooks.sorted { $0.title > $1.title }
+            filteredBooks = filteredBooks.sorted {
+                $0.title.localizedStandardCompare($1.title) == .orderedDescending
+            }
         }
         
         state.books = filteredBooks
-        
-        print("🔍 검색/정렬 결과:")
-        print("   - 검색어: '\(state.query)'")
-        print("   - 정렬: \(state.sortType.displayText)")
-        print("   - 결과 개수: \(state.books.count)")
     }
     
     func dispatch(_ action: Action) {
@@ -160,6 +168,11 @@ final class FavoriteListStore: Store {
             print("🔄 정렬 변경: \(sortType.displayText)")
             state.sortType = sortType
             filterAndSortBooks()
+            
+        case .updatePriceFilter(let filter):
+            print("💰 가격 필터 변경: \(filter.displayText)")
+            state.priceFilter = filter
+            filterAndSortBooks()
         }
     }
 }
@@ -169,22 +182,18 @@ struct FavoriteListView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // 검색바 (SearchListView와 동일한 패턴)
             SearchBarView(query: store.state.query) { text in
                 store.dispatch(.search(text))
             }
             .padding(.horizontal, 16)
             .padding(.top, 8)
             
-            // 정렬/필터 (즐겨찾기 데이터가 있을 때만 표시)
             if !store.state.allBooks.isEmpty {
                 FavoriteSortFilterView(store: store)
             }
             
-            // 메인 콘텐츠
             Group {
                 if store.state.isLoading {
-                    // 로딩 상태
                     VStack(spacing: 16) {
                         ProgressView()
                             .scaleEffect(1.2)
@@ -200,7 +209,7 @@ struct FavoriteListView: View {
                     
                 } else if store.state.books.isEmpty && !store.state.query.isEmpty {
                     // 검색 결과 없음
-                    emptySearchView
+                    emptyFilterView
                     
                 } else {
                     // 즐겨찾기 리스트
@@ -222,6 +231,7 @@ struct FavoriteListView: View {
                         }
                     }
                     .listStyle(PlainListStyle())
+                    .scrollDismissesKeyboard(.immediately)
                     .refreshable {
                         store.dispatch(.onAppear)
                     }
@@ -263,24 +273,38 @@ struct FavoriteListView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
-    private var emptySearchView: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 50, weight: .light))
-                .foregroundColor(.gray.opacity(0.6))
-            
-            VStack(spacing: 8) {
-                Text("검색 결과가 없어요")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(.primary)
-                
-                Text("'\(store.state.query)'와 일치하는\n즐겨찾기 책이 없습니다")
-                    .font(.system(size: 16))
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(2)
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
+    private var emptyFilterView: some View {
+           VStack(spacing: 20) {
+               Image(systemName: "magnifyingglass")
+                   .font(.system(size: 50, weight: .light))
+                   .foregroundColor(.gray.opacity(0.6))
+               
+               VStack(spacing: 8) {
+                   Text("조건에 맞는 책이 없어요")
+                       .font(.system(size: 20, weight: .semibold))
+                       .foregroundColor(.primary)
+                   
+                   if !store.state.query.isEmpty && store.state.priceFilter.isEnabled {
+                       Text("'\(store.state.query)' 검색어와 \(store.state.priceFilter.displayText) 조건에 맞는 책이 없습니다")
+                           .font(.system(size: 16))
+                           .foregroundColor(.secondary)
+                           .multilineTextAlignment(.center)
+                           .lineSpacing(2)
+                   } else if !store.state.query.isEmpty {
+                       Text("'\(store.state.query)'와 일치하는 즐겨찾기 책이 없습니다")
+                           .font(.system(size: 16))
+                           .foregroundColor(.secondary)
+                           .multilineTextAlignment(.center)
+                           .lineSpacing(2)
+                   } else if store.state.priceFilter.isEnabled {
+                       Text("\(store.state.priceFilter.displayText) 범위에 맞는 책이 없습니다")
+                           .font(.system(size: 16))
+                           .foregroundColor(.secondary)
+                           .multilineTextAlignment(.center)
+                           .lineSpacing(2)
+                   }
+               }
+           }
+           .frame(maxWidth: .infinity, maxHeight: .infinity)
+       }
 }

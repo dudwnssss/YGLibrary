@@ -13,6 +13,7 @@ enum Destination {
     case bookDetail(_ data: Book)
     case searchSortBottomSheet(_ sort: SearchSortType, onSortSelected: ((SearchSortType) -> Void))
     case favoriteSortBottomSheet(_ sort: FavoriteSortType, onSortSelected: ((FavoriteSortType) -> Void))
+    case priceFilterBottomSheet(_ filter: PriceFilter, onFilterSelected: ((PriceFilter) -> Void))
 }
 
 protocol ModuleFactory {
@@ -59,6 +60,18 @@ struct ModuleFactoryImpl: ModuleFactory {
                 sheet.detents = [.custom { _ in
                     240 // 🔧 핸들 + 헤더 + 2개 옵션 + 여백
                 }]
+                sheet.preferredCornerRadius = 16
+                sheet.prefersGrabberVisible = false
+            }
+            return vc
+        case .priceFilterBottomSheet(let filter, onFilterSelected: let onFilterSelected):
+            let view = PriceFilterBottomSheetView(
+                filter: filter,
+                onFilterSelected: onFilterSelected
+            )
+            let vc = UIHostingController(rootView: view)
+            if let sheet = vc.sheetPresentationController {
+                sheet.detents = [.medium(), .large()]
                 sheet.preferredCornerRadius = 16
                 sheet.prefersGrabberVisible = false
             }
