@@ -11,7 +11,8 @@ import SwiftUI
 enum Destination {
     case mainTab
     case bookDetail(_ data: Book)
-    case sortBottomSheet(_ sort: SearchSortType, onSortSelected: ((SearchSortType) -> Void))
+    case searchSortBottomSheet(_ sort: SearchSortType, onSortSelected: ((SearchSortType) -> Void))
+    case favoriteSortBottomSheet(_ sort: FavoriteSortType, onSortSelected: ((FavoriteSortType) -> Void))
 }
 
 protocol ModuleFactory {
@@ -31,15 +32,35 @@ struct ModuleFactoryImpl: ModuleFactory {
             let vc = UIHostingController(rootView: view)
             return vc
             
-        case .sortBottomSheet(let sort, let onSortSelected):
-            let view = SortBottomSheetView(selectedSort: sort, onSortSelected: onSortSelected)
+        case .searchSortBottomSheet(let sort, let onSortSelected):
+            let view = SortBottomSheetView(
+                selectedSort: sort,
+                sortOptions: SearchSortType.allCases,
+                onSortSelected: onSortSelected
+            )
             let vc = UIHostingController(rootView: view)
             if let sheet = vc.sheetPresentationController {
                 sheet.detents = [.custom { _ in
-                    200
+                    240 // 🔧 핸들 + 헤더 + 2개 옵션 + 여백
                 }]
                 sheet.preferredCornerRadius = 16
-                sheet.prefersGrabberVisible = true
+                sheet.prefersGrabberVisible = false
+            }
+            return vc
+            
+        case .favoriteSortBottomSheet(let sort, let onSortSelected):
+            let view = SortBottomSheetView(
+                selectedSort: sort,
+                sortOptions: FavoriteSortType.allCases,
+                onSortSelected: onSortSelected
+            )
+            let vc = UIHostingController(rootView: view)
+            if let sheet = vc.sheetPresentationController {
+                sheet.detents = [.custom { _ in
+                    240 // 🔧 핸들 + 헤더 + 2개 옵션 + 여백
+                }]
+                sheet.preferredCornerRadius = 16
+                sheet.prefersGrabberVisible = false
             }
             return vc
         }
