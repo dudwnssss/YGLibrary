@@ -43,6 +43,9 @@ struct SearchBarView: View {
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(UIColor.systemGray6))
         )
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(.white)
         .onAppear {
             searchText = query
         }

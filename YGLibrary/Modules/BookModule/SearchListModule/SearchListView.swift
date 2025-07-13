@@ -16,8 +16,7 @@ struct SearchListView: View {
             SearchBarView(query: store.query) { text in
                 store.dispatch(.search(text))
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
+
             
             // 정렬/필터
             if !store.books.isEmpty || !store.query.isEmpty {
