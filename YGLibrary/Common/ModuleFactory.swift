@@ -14,6 +14,7 @@ enum Destination {
     case searchSortBottomSheet(_ sort: SearchSortType, onSortSelected: ((SearchSortType) -> Void))
     case favoriteSortBottomSheet(_ sort: FavoriteSortType, onSortSelected: ((FavoriteSortType) -> Void))
     case priceFilterBottomSheet(_ filter: PriceFilter, onFilterSelected: ((PriceFilter) -> Void))
+    case favoriteSearchModal(onQuerySelected: ((String) -> Void))
 }
 
 protocol ModuleFactory {
@@ -74,6 +75,17 @@ struct ModuleFactoryImpl: ModuleFactory {
                 sheet.detents = [.medium(), .large()]
                 sheet.preferredCornerRadius = 16
                 sheet.prefersGrabberVisible = false
+            }
+            return vc
+            
+        case .favoriteSearchModal(let onQuerySelected):
+            let view = FavoriteSearchModalView(onQuerySelected: onQuerySelected)
+            let vc = UIHostingController(rootView: view)
+            vc.modalPresentationStyle = .pageSheet
+            if let sheet = vc.sheetPresentationController {
+                sheet.detents = [.large()]
+                sheet.preferredCornerRadius = 16
+                sheet.prefersGrabberVisible = true
             }
             return vc
         }

@@ -18,8 +18,9 @@ final class FavoriteListStore: Store {
         case search(String)
         case sort(FavoriteSortType)
         case updatePriceFilter(PriceFilter)
+        case openSearchModal
     }
-
+    
     struct State {
         var allBooks: [Book] = []           // 전체 즐겨찾기 책들
         var books: [Book] = []              // 검색/정렬 결과
@@ -29,7 +30,7 @@ final class FavoriteListStore: Store {
         var query: String = ""              // 검색어
         var sortType: FavoriteSortType = .ascending // 정렬 타입
         var priceFilter: PriceFilter = PriceFilter() // 가격 필터
-
+        
         func isFavorite(_ book: Book) -> Bool {
             return favoriteISBNs.contains(book.isbn)
         }
@@ -39,7 +40,7 @@ final class FavoriteListStore: Store {
     @Dependency(\.router) private var router
     @Dependency(\.favoriteService) private var favoriteService
     @Dependency(\.bookRepository) private var repository
-
+    
     private var cancellables = Set<AnyCancellable>()
     
     init() {
@@ -103,22 +104,22 @@ final class FavoriteListStore: Store {
     private func filterAndSortBooks() {
         var filteredBooks = state.allBooks
         
-        // 검색 필터링
+        // 검색 필터링 (초성 포함)
         if !state.query.isEmpty {
             filteredBooks = filteredBooks.filter { book in
-                book.title.localizedCaseInsensitiveContains(state.query) ||
-                book.authors.joined(separator: " ").localizedCaseInsensitiveContains(state.query) ||
-                book.publisher.localizedCaseInsensitiveContains(state.query)
+                book.title.matchesKoreanSearch(state.query) ||
+                book.authors.contains { $0.matchesKoreanSearch(state.query) } ||
+                book.publisher.matchesKoreanSearch(state.query)
             }
         }
         // 가격 필터링
-         if state.priceFilter.isEnabled {
-             filteredBooks = filteredBooks.filter { book in
-                 let price = book.pricing.salePrice > 0 ? book.pricing.salePrice : book.pricing.originPrice
-                 return price >= state.priceFilter.minPrice && price <= state.priceFilter.maxPrice
-             }
-         }
-                                    
+        if state.priceFilter.isEnabled {
+            filteredBooks = filteredBooks.filter { book in
+                let price = book.pricing.salePrice > 0 ? book.pricing.salePrice : book.pricing.originPrice
+                return price >= state.priceFilter.minPrice && price <= state.priceFilter.maxPrice
+            }
+        }
+        
         // 정렬
         switch state.sortType {
         case .ascending:
@@ -145,7 +146,7 @@ final class FavoriteListStore: Store {
             
         case .navigateToDetail(let book):
             router.navigate(to: .bookDetail(book), type: .push)
-
+            
         case .removeFavorite(let book):
             print("💔 removeFavorite: \(book.title)")
             Task {
@@ -174,6 +175,12 @@ final class FavoriteListStore: Store {
             print("💰 가격 필터 변경: \(filter.displayText)")
             state.priceFilter = filter
             filterAndSortBooks()
+            
+        case .openSearchModal:
+            print("🔍 검색 모달 열기")
+            router.navigate(to: .favoriteSearchModal { [weak self] query in
+                self?.dispatch(.search(query))
+            }, type: .present())
         }
     }
 }

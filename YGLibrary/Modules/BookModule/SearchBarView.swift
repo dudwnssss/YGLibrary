@@ -40,7 +40,7 @@ struct SearchBarView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .background(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 24)
                 .fill(Color(UIColor.systemGray6))
         )
         .padding(.horizontal, 16)

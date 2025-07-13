@@ -12,9 +12,7 @@ struct FavoriteListView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            SearchBarView(query: store.state.query) { text in
-                store.dispatch(.search(text))
-            }
+            searchButtonView
             
             if !store.state.allBooks.isEmpty {
                 FavoriteSortFilterView(store: store)
@@ -135,4 +133,49 @@ struct FavoriteListView: View {
            }
            .frame(maxWidth: .infinity, maxHeight: .infinity)
        }
+    
+    // MARK: - Search Button View
+    
+    private var searchButtonView: some View {
+        Button(action: {
+            store.dispatch(.openSearchModal)
+        }) {
+            HStack(spacing: 12) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.secondary)
+                
+                HStack {
+                    if store.state.query.isEmpty {
+                        Text("제목 또는 저자를 입력하세요")
+                            .foregroundColor(.secondary)
+                    } else {
+                        Text(store.state.query)
+                            .foregroundColor(.primary)
+                    }
+                    Spacer()
+                }
+                .font(.system(size: 16))
+                
+                if !store.state.query.isEmpty {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(.secondary)
+                        .onTapGesture {
+                            store.dispatch(.search(""))
+                        }
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(UIColor.systemGray6))
+            )
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .background(.white)
+    }
 }
