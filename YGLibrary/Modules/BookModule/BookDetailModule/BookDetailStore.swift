@@ -31,6 +31,7 @@ final class BookDetailStore: Store {
     @Published private(set) var state: State
     @Dependency(\.router) private var router
     @Dependency(\.favoriteService) private var favoriteService
+    @Dependency(\.toast) private var toast
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -64,9 +65,9 @@ final class BookDetailStore: Store {
                     
                     await MainActor.run {
                         if isFavorite {
-                            print("'\(state.book.title)' 즐겨찾기에 추가되었습니다")
+                            toast.showAddFavorite()
                         } else {
-                            print("'\(state.book.title)' 즐겨찾기에서 제거되었습니다")
+                            toast.showRemoveFavorite()
                         }
                     }
                 } catch {

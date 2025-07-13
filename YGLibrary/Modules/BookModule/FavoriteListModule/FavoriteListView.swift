@@ -48,7 +48,7 @@ struct FavoriteListView: View {
                                     store.dispatch(.navigateToDetail(book))
                                 },
                                 onFavoriteToggle: {
-                                    store.dispatch(.removeFavorite(book))
+                                    store.dispatch(.toggleFavorite(book))
                                 }
                             )
                             .listRowSeparator(.hidden)

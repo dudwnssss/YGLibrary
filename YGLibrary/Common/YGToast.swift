@@ -1,70 +1,47 @@
 //
-//  YGToast.swift
+//  SuperSimpleToast.swift
 //  YGLibrary
 //
 //  Created by 임영준 on 7/13/25.
 //
 
 import SwiftUI
+import UIKit
+import Dependencies
 
-// MARK: - Toast Configuration
+// MARK: - Config
 struct ToastConfig {
     let message: String
     let icon: String?
+    let iconColor: Color
     let duration: TimeInterval
-    let actionText: String?
-    let action: (() -> Void)?
     
-    init(
-        message: String,
-        icon: String? = nil,
-        duration: TimeInterval = 3.0,
-        actionText: String? = nil,
-        action: (() -> Void)? = nil
-    ) {
+    init(message: String, icon: String? = nil, iconColor: Color = .white, duration: TimeInterval = 2.0) {
         self.message = message
         self.icon = icon
+        self.iconColor = iconColor
         self.duration = duration
-        self.actionText = actionText
-        self.action = action
     }
 }
 
 // MARK: - Toast View
-struct YGToast: View {
+struct ToastView: View {
     let config: ToastConfig
-    let onDismiss: () -> Void
-    
-    @State private var isVisible = false
+    @State private var scale: CGFloat = 0
     
     var body: some View {
         HStack(spacing: 12) {
-            // 아이콘
             if let icon = config.icon {
                 Image(systemName: icon)
                     .font(.system(size: 20, weight: .medium))
-                    .foregroundColor(.white)
+                    .foregroundColor(config.iconColor)
             }
             
-            // 메시지
             Text(config.message)
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(.white)
-                .multilineTextAlignment(.leading)
             
             Spacer()
-            
-            // 액션 버튼
-            if let actionText = config.actionText {
-                Button(action: {
-                    config.action?()
-                    onDismiss()
-                }) {
-                    Text(actionText)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.blue)
-                }
-            }
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
@@ -72,167 +49,133 @@ struct YGToast: View {
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color.black.opacity(0.9))
         )
-        .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
-        .offset(y: isVisible ? 0 : 100)
-        .opacity(isVisible ? 1 : 0)
-        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: isVisible)
+        .scaleEffect(x: 1, y: scale, anchor: .bottom)
         .onAppear {
-            isVisible = true
-            
-            // 자동 사라짐
-            DispatchQueue.main.asyncAfter(deadline: .now() + config.duration) {
-                dismiss()
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                scale = 1
             }
-        }
-        .onTapGesture {
-            dismiss()
         }
     }
     
-    private func dismiss() {
-        isVisible = false
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            onDismiss()
+    func hide() {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            scale = 0
         }
     }
 }
 
-// MARK: - Toast Manager
-class ToastManager: ObservableObject {
+// MARK: - Simple Manager
+final class ToastManager {
     static let shared = ToastManager()
-    
-    @Published var toasts: [ToastItem] = []
-    
-    private init() {}
-    
-    struct ToastItem: Identifiable {
-        let id = UUID()
-        let config: ToastConfig
-    }
+    private var currentContainer: UIView?
+    private var currentToastView: ToastView?
     
     func show(_ config: ToastConfig) {
-        let item = ToastItem(config: config)
+        DispatchQueue.main.async {
+            // 기존거 즉시 제거
+            self.currentContainer?.removeFromSuperview()
+            
+            guard let vc = self.topViewController() else { return }
+            
+            // 새로 만들기
+            let container = UIView()
+            let toastView = ToastView(config: config)
+            let host = UIHostingController(rootView: toastView)
+            
+            container.backgroundColor = .clear
+            host.view.backgroundColor = .clear
+            
+            container.addSubview(host.view)
+            vc.view.addSubview(container)
+            
+            // 제약조건
+            container.translatesAutoresizingMaskIntoConstraints = false
+            host.view.translatesAutoresizingMaskIntoConstraints = false
+            
+            NSLayoutConstraint.activate([
+                container.leadingAnchor.constraint(equalTo: vc.view.leadingAnchor, constant: 16),
+                container.trailingAnchor.constraint(equalTo: vc.view.trailingAnchor, constant: -16),
+                container.bottomAnchor.constraint(equalTo: vc.view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+                container.heightAnchor.constraint(equalToConstant: 60),
+                
+                host.view.topAnchor.constraint(equalTo: container.topAnchor),
+                host.view.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+                host.view.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+                host.view.trailingAnchor.constraint(equalTo: container.trailingAnchor)
+            ])
+            
+            self.currentContainer = container
+            self.currentToastView = toastView
+            
+            // 자동 사라짐 (접히면서)
+            DispatchQueue.main.asyncAfter(deadline: .now() + config.duration) {
+                if self.currentContainer === container {
+                    toastView.hide()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        if self.currentContainer === container {
+                            container.removeFromSuperview()
+                            self.currentContainer = nil
+                            self.currentToastView = nil
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    private func topViewController() -> UIViewController? {
+        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = scene.windows.first else { return nil }
         
-        DispatchQueue.main.async {
-            // 기존 토스트가 있으면 제거
-            self.toasts.removeAll()
-            self.toasts.append(item)
+        var top = window.rootViewController
+        while let presented = top?.presentedViewController {
+            top = presented
         }
-    }
-    
-    func dismiss(_ item: ToastItem) {
-        DispatchQueue.main.async {
-            self.toasts.removeAll { $0.id == item.id }
-        }
-    }
-    
-    func dismissAll() {
-        DispatchQueue.main.async {
-            self.toasts.removeAll()
-        }
-    }
-}
-
-// MARK: - Toast Container View
-struct ToastContainer<Content: View>: View {
-    let content: Content
-    @StateObject private var toastManager = ToastManager.shared
-    
-    init(@ViewBuilder content: () -> Content) {
-        self.content = content()
-    }
-    
-    var body: some View {
-        ZStack {
-            content
-            
-            // 토스트 오버레이
-            VStack {
-                Spacer()
-                
-                ForEach(toastManager.toasts) { item in
-                    YGToast(config: item.config) {
-                        toastManager.dismiss(item)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 8)
-                }
+        
+        if let tab = top as? UITabBarController {
+            if let nav = tab.selectedViewController as? UINavigationController {
+                return nav.topViewController
             }
-            .animation(.easeInOut(duration: 0.3), value: toastManager.toasts.count)
+            return tab.selectedViewController
         }
+        
+        if let nav = top as? UINavigationController {
+            return nav.topViewController
+        }
+        
+        return top
     }
 }
 
-// MARK: - Convenience Extensions
-extension ToastManager {
-    func showSuccess(_ message: String, actionText: String? = nil, action: (() -> Void)? = nil) {
-        show(ToastConfig(
-            message: message,
-            icon: "checkmark.circle.fill",
-            actionText: actionText,
-            action: action
-        ))
+// MARK: - Service
+protocol ToastService {
+    func show(_ config: ToastConfig)
+    func showAddFavorite()
+    func showRemoveFavorite()
+}
+
+struct ToastServiceImpl: ToastService {
+    func show(_ config: ToastConfig) {
+        ToastManager.shared.show(config)
     }
     
-    func showError(_ message: String, actionText: String? = nil, action: (() -> Void)? = nil) {
-        show(ToastConfig(
-            message: message,
-            icon: "exclamationmark.circle.fill",
-            actionText: actionText,
-            action: action
-        ))
+    func showAddFavorite() {
+        show(ToastConfig(message: "즐겨찾기에 저장되었어요.", icon: "heart.fill", iconColor: .red))
     }
     
-    func showInfo(_ message: String, actionText: String? = nil, action: (() -> Void)? = nil) {
-        show(ToastConfig(
-            message: message,
-            icon: "info.circle.fill",
-            actionText: actionText,
-            action: action
-        ))
-    }
-    
-    func showFavorite(_ message: String, actionText: String? = nil, action: (() -> Void)? = nil) {
-        show(ToastConfig(
-            message: message,
-            icon: "heart.fill",
-            actionText: actionText,
-            action: action
-        ))
+    func showRemoveFavorite() {
+        show(ToastConfig(message: "즐겨찾기에서 해제되었어요.", icon: "heart.fill", iconColor: .white))
     }
 }
 
-#Preview {
-    ToastContainer {
-        VStack(spacing: 20) {
-            Text("토스트 테스트")
-                .font(.title)
-                .padding()
-            
-            VStack(spacing: 16) {
-                Button("성공 토스트") {
-                    ToastManager.shared.showSuccess("즐겨찾기에 추가되었습니다")
-                }
-                
-                Button("에러 토스트") {
-                    ToastManager.shared.showError("네트워크 오류가 발생했습니다")
-                }
-                
-                Button("정보 토스트") {
-                    ToastManager.shared.showInfo("새로운 업데이트가 있습니다")
-                }
-                
-                Button("즐겨찾기 토스트 (액션 포함)") {
-                    ToastManager.shared.showFavorite("기본 폴더에서 해제되었어요.", actionText: "변경") {
-                        print("변경 버튼 클릭됨")
-                    }
-                }
-            }
-            .buttonStyle(.borderedProminent)
-            
-            Spacer()
-        }
-        .padding()
+// MARK: - Dependencies
+private enum ToastServiceKey: DependencyKey {
+    static let liveValue: ToastService = ToastServiceImpl()
+}
+
+extension DependencyValues {
+    var toast: ToastService {
+        get { self[ToastServiceKey.self] }
+        set { self[ToastServiceKey.self] = newValue }
     }
 }

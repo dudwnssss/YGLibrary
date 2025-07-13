@@ -14,7 +14,7 @@ final class FavoriteListStore: Store {
     enum Action {
         case onAppear
         case navigateToDetail(Book)
-        case removeFavorite(Book)
+        case toggleFavorite(Book)
         case search(String)
         case sort(FavoriteSortType)
         case updatePriceFilter(PriceFilter)
@@ -40,6 +40,7 @@ final class FavoriteListStore: Store {
     @Dependency(\.router) private var router
     @Dependency(\.favoriteService) private var favoriteService
     @Dependency(\.bookRepository) private var repository
+    @Dependency(\.toast) private var toastService
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -61,9 +62,8 @@ final class FavoriteListStore: Store {
                 self?.state.favoriteISBNs = isbns
                 print("   - state.favoriteISBNs 업데이트됨: \(self?.state.favoriteISBNs ?? [])")
                 
-                Task {
-                    await self?.loadFavoriteBooks()
-                }
+                // 즐겨찾기 해제 시에는 즉시 UI 업데이트하지 않음
+                // loadFavoriteBooks()는 다른 액션에서만 호출
             }
             .store(in: &cancellables)
         
@@ -74,7 +74,9 @@ final class FavoriteListStore: Store {
         print("📚 loadFavoriteBooks 시작")
         
         do {
-            state.isLoading = true
+            // 새로고침 시에는 기존 데이터를 유지하면서 로딩
+            // state.isLoading = true 제거
+            
             let books = try await repository.getAllFavoriteBooks()
             
             print("📖 repository에서 가져온 책들:")
@@ -84,7 +86,7 @@ final class FavoriteListStore: Store {
             await MainActor.run {
                 state.allBooks = books
                 filterAndSortBooks()
-                state.isLoading = false
+                // state.isLoading = false 제거
                 
                 print("📋 최종 상태:")
                 print("   - state.allBooks 개수: \(state.allBooks.count)")
@@ -95,7 +97,7 @@ final class FavoriteListStore: Store {
             print("❌ loadFavoriteBooks 실패: \(error)")
             await MainActor.run {
                 state.isError = true
-                state.isLoading = false
+                // state.isLoading = false 제거
             }
         }
     }
@@ -139,42 +141,68 @@ final class FavoriteListStore: Store {
         switch action {
         case .onAppear:
             print("👁️ FavoriteListView onAppear")
+            
+            // 최초 로딩시에만 로딩 상태 표시
+            if state.allBooks.isEmpty {
+                state.isLoading = true
+            }
+            
             Task {
                 try await favoriteService.loadFavoriteStatus()
                 await loadFavoriteBooks()
+                
+                // 로딩 완료
+                await MainActor.run {
+                    state.isLoading = false
+                }
             }
             
         case .navigateToDetail(let book):
             router.navigate(to: .bookDetail(book), type: .push)
             
-        case .removeFavorite(let book):
-            print("💔 removeFavorite: \(book.title)")
+        case .toggleFavorite(let book):
             Task {
                 do {
-                    _ = try await favoriteService.toggleFavorite(book)
-                    print("✅ '\(book.title)' 즐겨찾기에서 제거됨")
-                } catch {
-                    print("❌ removeFavorite 실패: \(error)")
+                    let isFavorite = try await favoriteService.toggleFavorite(book)
+                    
                     await MainActor.run {
-                        state.isError = true
+                        if isFavorite {
+                            toastService.showAddFavorite()
+                        } else {
+                            toastService.showRemoveFavorite()
+                        }
                     }
-                }
+                 } catch {
+                     await MainActor.run {
+                         state.isError = true
+                         print("즐겨찾기 처리 중 오류가 발생했습니다: \(error)")
+                     }
+                 }
             }
             
         case .search(let query):
             print("🔍 검색어 변경: '\(query)'")
             state.query = query
-            filterAndSortBooks()
+            // 검색 시 즐겨찾기 목록 새로 불러오기
+            Task {
+                await loadFavoriteBooks()
+            }
             
         case .sort(let sortType):
             print("🔄 정렬 변경: \(sortType.displayText)")
             state.sortType = sortType
-            filterAndSortBooks()
+            // 정렬 시 즐겨찾기 목록 새로 불러오기
+            Task {
+                await loadFavoriteBooks()
+            }
             
         case .updatePriceFilter(let filter):
             print("💰 가격 필터 변경: \(filter.displayText)")
             state.priceFilter = filter
-            filterAndSortBooks()
+            // 필터 시 즐겨찾기 목록 새로 불러오기
+            Task {
+                await loadFavoriteBooks()
+            }
             
         case .openSearchModal:
             print("🔍 검색 모달 열기")

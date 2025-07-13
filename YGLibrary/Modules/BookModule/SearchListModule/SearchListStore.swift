@@ -51,8 +51,10 @@ final class SearchListStore: Store {
     @Dependency(\.bookService) private var service
     @Dependency(\.bookRepository) private var repository
     @Dependency(\.favoriteService) private var favoriteService
+    @Dependency(\.toast) private var toastService
     
     private var currentSearchTask: Task<Void, Never>?
+    private var currentLoadMoreTask: Task<Void, Never>?
     private var cancellables = Set<AnyCancellable>()
     
     init() {
@@ -89,9 +91,14 @@ final class SearchListStore: Store {
             resetAndSearch()
             
         case .loadNextPage:
-            guard state.canLoadMore else { return }
+            // 이미 로딩 중이거나 더 이상 데이터가 없으면 중단
+            guard state.canLoadMore, currentLoadMoreTask == nil else { return }
+            
             state.currentPage += 1
-            Task { await loadData(isLoadingMore: true) }
+            currentLoadMoreTask = Task { 
+                await loadData(isLoadingMore: true)
+                currentLoadMoreTask = nil
+            }
         
         case .toggleFavorite(let book):
             Task {
@@ -104,6 +111,9 @@ final class SearchListStore: Store {
 extension SearchListStore {
     private func resetAndSearch() {
         currentSearchTask?.cancel()
+        currentLoadMoreTask?.cancel() // 로드더 태스크도 취소
+        currentLoadMoreTask = nil
+        
         state.currentPage = 1
         state.books = []
         state.meta = nil
@@ -140,7 +150,11 @@ extension SearchListStore {
             state.meta = response.meta
             
             if isLoadingMore {
-                state.books.append(contentsOf: response.documents.map { Book(from: $0) })
+                // 중복 방지: 기존 책 목록에 없는 책만 추가
+                let newBooks = response.documents.map { Book(from: $0) }
+                let existingISBNs = Set(state.books.map { $0.isbn })
+                let uniqueNewBooks = newBooks.filter { !existingISBNs.contains($0.isbn) }
+                state.books.append(contentsOf: uniqueNewBooks)
             } else {
                 state.books = response.documents.map { Book(from: $0) }
             }
@@ -163,10 +177,13 @@ extension SearchListStore {
     private func toggleFavorite(_ book: Book) async {
         do {
             let isFavorite = try await favoriteService.toggleFavorite(book)
-            if isFavorite {
-                print("'\(book.title)' 즐겨찾기에 추가되었습니다")
-            } else {
-                print("'\(book.title)' 즐겨찾기에서 제거되었습니다")
+            
+            await MainActor.run {
+                if isFavorite {
+                    toastService.showAddFavorite()
+                } else {
+                    toastService.showRemoveFavorite()
+                }
             }
          } catch {
              await MainActor.run {
