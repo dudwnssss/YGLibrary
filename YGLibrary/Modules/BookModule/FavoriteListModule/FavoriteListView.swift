@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-
 import Combine
 import Dependencies
 
@@ -119,18 +118,28 @@ final class FavoriteListStore: Store {
     }
 }
 
-
 struct FavoriteListView: View {
     @StateObject var store = FavoriteListStore()
     
     var body: some View {
-        VStack {
+        VStack(spacing: 0) {
             if store.state.isLoading {
-                ProgressView("로딩 중...")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                // 로딩 상태
+                VStack(spacing: 16) {
+                    ProgressView()
+                        .scaleEffect(1.2)
+                    Text("즐겨찾기 불러오는 중...")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                
             } else if store.state.books.isEmpty {
+                // 빈 상태
                 emptyView
+                
             } else {
+                // 즐겨찾기 리스트
                 List {
                     ForEach(store.state.books, id: \.isbn) { book in
                         BookRowView(
@@ -152,38 +161,44 @@ struct FavoriteListView: View {
                         }
                         .listRowSeparator(.hidden)
                         .listRowBackground(Color.clear)
-                        .listRowInsets(.init(top: 6, leading: 8, bottom: 6, trailing: 8))
+                        .listRowInsets(.init(top: 6, leading: 16, bottom: 6, trailing: 16))
                     }
                 }
+                .listStyle(PlainListStyle())
                 .refreshable {
-//                    store.dispatch(.refresh)
+                    store.dispatch(.onAppear)
                 }
             }
         }
+        .background(Color(UIColor.systemGroupedBackground))
         .onAppear {
             store.dispatch(.onAppear)
         }
         .ygToolbar {
             YGToolbarItem.principal {
                 Text("즐겨찾기")
+                    .font(.system(size: 18, weight: .semibold))
             }
         }
     }
     
     private var emptyView: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 20) {
             Image(systemName: "heart.slash")
-                .font(.system(size: 50))
-                .foregroundColor(.gray)
+                .font(.system(size: 50, weight: .light))
+                .foregroundColor(.gray.opacity(0.6))
             
-            Text("즐겨찾기한 책이 없습니다")
-                .font(.headline)
-                .foregroundColor(.gray)
-            
-            Text("검색에서 마음에 드는 책을\n즐겨찾기에 추가해보세요")
-                .font(.body)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
+            VStack(spacing: 8) {
+                Text("즐겨찾기한 책이 없습니다")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(.primary)
+                
+                Text("검색에서 마음에 드는 책을\n즐겨찾기에 추가해보세요")
+                    .font(.system(size: 16))
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(2)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

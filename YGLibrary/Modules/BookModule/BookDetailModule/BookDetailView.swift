@@ -7,161 +7,226 @@
 
 import SwiftUI
 
-import Combine
-import Dependencies
 import Kingfisher
 
-final class BookDetailStore: Store {
-    enum Action {
-        case onAppear
-        case toggleFavorite
-        case pop
-    }
-    
-    struct State {
-        let book: Book
-        var isFavorite: Bool = false
-        var isLoading: Bool = false
-        var isError: Bool = false
-        
-        init(book: Book) {
-            self.book = book
-        }
-    }
-    
-    @Published private(set) var state: State
-    @Dependency(\.router) private var router
-    @Dependency(\.favoriteService) private var favoriteService
-    
-    private var cancellables = Set<AnyCancellable>()
-    
-    init(book: Book) {
-        self.state = State(book: book)
-        setSubscription()
-    }
-    
-    private func setSubscription() {
-        favoriteService.favoriteISBNs
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] isbns in
-                guard let self else { return }
-                state.isFavorite = isbns.contains(state.book.isbn)
-            }
-            .store(in: &cancellables)
-    }
-    
-    func dispatch(_ action: Action) {
-        switch action {
-        case .onAppear:
-            state.isFavorite = favoriteService.isFavorite(isbn: state.book.isbn)
-        case .toggleFavorite:
-            Task {
-                await MainActor.run {
-                    state.isLoading = true
-                }
-                
-                do {
-                    let isFavorite = try await favoriteService.toggleFavorite(state.book)
-                    
-                    await MainActor.run {
-                        if isFavorite {
-                            print("'\(state.book.title)' 즐겨찾기에 추가되었습니다")
-                        } else {
-                            print("'\(state.book.title)' 즐겨찾기에서 제거되었습니다")
-                        }
-                    }
-                } catch {
-                    await MainActor.run {
-                        state.isError = true
-                    }
-                }
-                
-                await MainActor.run {
-                    state.isLoading = false  
-                }
-            }
-        case .pop:
-            router.pop(animated: true)
-        }
-            
-    }
-}
 
 struct BookDetailView: View {
     @StateObject var store: BookDetailStore
     
     var body: some View {
-            VStack(alignment: .leading) {
-                Text(store.book.title)
-                    .bold()
-                    .font(.title2)
-                HStack(alignment: .top, spacing: 8) {
-                    KFImage(store.book.thumbnail)
-                        .aspectRatio(1.4/2, contentMode: .fit)
-                        .foregroundStyle(
-                            Color(uiColor: .systemGray5)
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                    VStack(alignment: .leading) {
-                        Text("저자 : ")
-                            .bold()
-                        +
-                        Text(store.book.authors.joined(separator: ", "))
-                        Text("출판사 : ")
-                            .bold()
-                        +
-                        Text(store.book.publisher)
-                        Text("출간일 : ")
-                            .bold()
-                        +
-                        Text("출간일")
-                        Text("isbn : ")
-                            .bold()
-                        +
-                        Text(store.book.isbn)
-                        Text("정상가 : ")
-                            .bold()
-                        +
-                        Text(store.book.pricing.displayOriginPrice)
-                        Text("할인가 : ")
-                            .bold()
-                        +
-                        Text(store.book.pricing.displaySalePrice)
-                    }
-                    Spacer()
-                    Spacer()
-                    Spacer()
-                    Spacer()
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                // 메인 책 정보 섹션
+                bookHeaderSection
+                
+                // 상세 정보 섹션
+                bookDetailsSection
+                
+                // 책 소개 섹션
+                bookDescriptionSection
+            }
+            .padding(20)
+        }
+        .background(Color(UIColor.systemBackground))
+        .ygToolbar {
+            YGToolbarItem.leading {
+                Button(action: {
+                    store.dispatch(.pop)
+                }) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.primary)
                 }
-                Text("책 소개")
-                    .bold()
-                    .font(.headline)
-                Text(store.book.contents)
+            }
+            
+            YGToolbarItem.principal {
+                Text("도서 상세")
+                    .font(.system(size: 18, weight: .semibold))
+            }
+            
+            YGToolbarItem.trailing {
+                Button(action: {
+                    store.dispatch(.toggleFavorite)
+                }) {
+                    Image(systemName: store.state.isFavorite ? "heart.fill" : "heart")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(store.state.isFavorite ? .red : .gray)
+                }
+                .disabled(store.state.isLoading)
+                .opacity(store.state.isLoading ? 0.6 : 1.0)
+            }
+        }
+        .onAppear {
+            store.dispatch(.onAppear)
+        }
+    }
+    
+    // MARK: - Subviews
+    
+    private var bookHeaderSection: some View {
+        HStack(alignment: .top, spacing: 16) {
+            // 책 이미지
+            AsyncImage(url: store.state.book.thumbnail) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } placeholder: {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.gray.opacity(0.2))
+                    .overlay(
+                        Image(systemName: "book.closed")
+                            .foregroundColor(.gray)
+                            .font(.title)
+                    )
+            }
+            .frame(width: 120, height: 170)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
+            
+            // 책 정보
+            VStack(alignment: .leading, spacing: 12) {
+                // 제목
+                Text(store.state.book.title)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.primary)
+                    .lineLimit(3)
+                    .multilineTextAlignment(.leading)
+                
+                // 저자
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("저자")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.secondary)
+                    Text(store.state.book.authors.joined(separator: ", "))
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.primary)
+                }
+                
+                // 출판사
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("출판사")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.secondary)
+                    Text(store.state.book.publisher)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.primary)
+                }
+                
+                // 출간일
+                if let dateTime = store.state.book.dateTime {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("출간일")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.secondary)
+                        Text(DateFormatter.bookDate.string(from: dateTime))
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.primary)
+                    }
+                }
+                
                 Spacer()
             }
-            .ygToolbar {
-                YGToolbarItem.leading {
-                    Button(action: {
-                        store.dispatch(.pop)
-                    }) {
-                        Image(systemName: "arrow.left")
-                    }
-                    .buttonStyle(YGScaleButtonStyle())
-                }
-                YGToolbarItem.trailing {
-                    Button(action: {
-                        store.dispatch(.toggleFavorite)
-                    }) {
-                        Image(systemName: store.isFavorite ? "heart.fill" : "heart")
-                            .foregroundStyle(store.isFavorite ? .red : .gray)
-                    }
-                    .buttonStyle(YGScaleButtonStyle())
-                }
-            }
-            .onAppear {
-                store.dispatch(.onAppear)
-            }
-            .padding(.horizontal, 16)
+            
+            Spacer(minLength: 0)
         }
+    }
+    
+    private var bookDetailsSection: some View {
+        VStack(spacing: 16) {
+            // 섹션 제목
+            HStack {
+                Text("상세 정보")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.primary)
+                Spacer()
+            }
+            
+            // 정보 카드
+            VStack(spacing: 0) {
+                DetailRowView(label: "ISBN", value: store.state.book.isbn)
+                
+                Divider()
+                    .padding(.horizontal, 16)
+                
+                DetailRowView(
+                    label: "정상가", 
+                    value: store.state.book.pricing.displayOriginPrice,
+                    valueColor: store.state.book.pricing.salePrice < store.state.book.pricing.originPrice ? .secondary : .primary,
+                    isStrikethrough: store.state.book.pricing.salePrice < store.state.book.pricing.originPrice
+                )
+                
+                if store.state.book.pricing.salePrice < store.state.book.pricing.originPrice {
+                    Divider()
+                        .padding(.horizontal, 16)
+                    
+                    DetailRowView(
+                        label: "할인가", 
+                        value: store.state.book.pricing.displaySalePrice,
+                        valueColor: .red,
+                        valueWeight: .bold
+                    )
+                }
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(UIColor.secondarySystemGroupedBackground))
+            )
+        }
+    }
+    
+    private var bookDescriptionSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // 섹션 제목
+            HStack {
+                Text("책 소개")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.primary)
+                Spacer()
+            }
+            
+            // 내용
+            Text(store.state.book.contents)
+                .font(.system(size: 15))
+                .foregroundColor(.primary)
+                .lineSpacing(4)
+                .padding(16)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(UIColor.secondarySystemGroupedBackground))
+                )
+        }
+    }
 }
 
+struct DetailRowView: View {
+    let label: String
+    let value: String
+    var valueColor: Color = .primary
+    var valueWeight: Font.Weight = .medium
+    var isStrikethrough: Bool = false
+    
+    var body: some View {
+        HStack {
+            Text(label)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.secondary)
+            
+            Spacer()
+            
+            Text(value)
+                .font(.system(size: 14, weight: valueWeight))
+                .foregroundColor(valueColor)
+                .strikethrough(isStrikethrough)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+    }
+}
+
+extension DateFormatter {
+    static let bookDate: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy년 MM월 dd일"
+        return formatter
+    }()
+}

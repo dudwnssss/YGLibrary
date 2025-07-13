@@ -72,13 +72,16 @@ struct YGToolbar: View {
     
     var body: some View {
         ZStack {
+            // Principal (중앙)
             HStack(spacing: 8) {
                 ForEach(principalItems.indices, id: \.self) { index in
                     principalItems[index].content
                 }
             }
             
+            // Leading과 Trailing
             HStack {
+                // Leading
                 HStack(spacing: 8) {
                     ForEach(leadingItems.indices, id: \.self) { index in
                         leadingItems[index].content
@@ -88,6 +91,7 @@ struct YGToolbar: View {
                 
                 Spacer()
                 
+                // Trailing
                 HStack(spacing: 8) {
                     ForEach(trailingItems.indices, id: \.self) { index in
                         trailingItems[index].content
@@ -97,7 +101,15 @@ struct YGToolbar: View {
             }
         }
         .frame(height: height)
-        .background(Color.white)
+        .padding(.horizontal, 16)
+        .background(Color(UIColor.systemBackground))
+        .overlay(
+            // 하단 구분선
+            Rectangle()
+                .fill(Color(UIColor.separator))
+                .frame(height: 0.5),
+            alignment: .bottom
+        )
     }
 }
 
@@ -116,14 +128,14 @@ struct YGToolbarModifier: ViewModifier {
 
 extension View {
     func ygToolbar(
-        height: CGFloat = 56,
+        height: CGFloat = 44, // 🔧 시스템 네비게이션바와 같은 높이로 변경
         @YGToolbarContentBuilder content: () -> [YGToolbarItem]
     ) -> some View {
         modifier(YGToolbarModifier(height: height, items: content()))
     }
     
     func ygToolbar(
-        height: CGFloat = 56,
+        height: CGFloat = 44, // 🔧 시스템 네비게이션바와 같은 높이로 변경
         @YGToolbarContentBuilder content: () -> YGToolbarItem
     ) -> some View {
         modifier(YGToolbarModifier(height: height, items: [content()]))
