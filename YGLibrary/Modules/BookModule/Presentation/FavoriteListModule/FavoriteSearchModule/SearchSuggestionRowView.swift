@@ -15,15 +15,12 @@ struct SearchSuggestionRowView: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 12) {
-                // 아이콘
                 Image(systemName: suggestion.type.iconName)
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.secondary)
                     .frame(width: 20, height: 20)
                 
-                // 텍스트 영역
                 VStack(alignment: .leading, spacing: 2) {
-                    // 메인 텍스트 (하이라이트 포함)
                     HighlightedText(
                         text: suggestion.text,
                         query: query
@@ -31,7 +28,6 @@ struct SearchSuggestionRowView: View {
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.primary)
                     
-                    // 서브 텍스트
                     Text(suggestion.subtitle)
                         .font(.system(size: 14))
                         .foregroundColor(.secondary)
@@ -68,7 +64,6 @@ struct HighlightedText: View {
         
         switch matchType {
         case .exactMatch:
-            // 일반 텍스트 매칭만 하이라이트
             if let range = text.range(of: query, options: .caseInsensitive) {
                 let nsRange = NSRange(range, in: text)
                 
@@ -79,7 +74,6 @@ struct HighlightedText: View {
             }
             
         case .choseongMatch:
-            // 초성 매칭은 하이라이트 안 함
             break
             
         case .noMatch:

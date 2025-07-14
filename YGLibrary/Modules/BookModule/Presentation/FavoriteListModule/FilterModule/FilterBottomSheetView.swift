@@ -19,14 +19,10 @@ struct PriceFilterBottomSheetView: View {
         self.onFilterSelected = onFilterSelected
     }
     
-    // 프리셋 가격 범위들
-    private let pricePresets: [(title: String, min: Int, max: Int)] = [
-        ("1만원 이하", 0, 10000),
-        ("1~2만원", 10000, 20000),
-        ("2~3만원", 20000, 30000),
-        ("3~4만원", 30000, 40000),
-        ("4만원 이상", 40000, 50000)
-    ]
+    // 동적 프리셋 가격 범위들
+    private var dynamicPresets: [(title: String, min: Int, max: Int)] {
+        return currentFilter.generateDynamicPresets()
+    }
     
     var body: some View {
         VStack(spacing: .zero) {
@@ -65,21 +61,21 @@ struct PriceFilterBottomSheetView: View {
                     // 커스텀 슬라이더
                     VStack(spacing: 20) {
                         HStack {
-                            Text("\(PriceFilter.defaultMinPrice.formatted()) 원")
+                            Text("\(currentFilter.dynamicMinPrice.formatted()) 원")
                                 .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(.secondary)
                             
                             Spacer()
                             
-                            Text("\(PriceFilter.defaultMaxPrice.formatted())원")
+                            Text("\(currentFilter.dynamicMaxPrice.formatted())원")
                                 .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(.secondary)
                         }
                         .padding(.horizontal, 20)
                         
                         YGRangeSlider(
-                            minValue: Double(PriceFilter.defaultMinPrice),
-                            maxValue: Double(PriceFilter.defaultMaxPrice),
+                            minValue: Double(currentFilter.dynamicMinPrice),
+                            maxValue: Double(currentFilter.dynamicMaxPrice),
                             lowerValue: Binding(
                                 get: { Double(currentFilter.minPrice) },
                                 set: { currentFilter.minPrice = Int($0) }
@@ -96,7 +92,7 @@ struct PriceFilterBottomSheetView: View {
                     // 프리셋 버튼들
                     VStack(spacing: 16) {
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
-                            ForEach(pricePresets, id: \.title) { preset in
+                            ForEach(dynamicPresets, id: \.title) { preset in
                                 Button(action: {
                                     currentFilter.minPrice = preset.min
                                     currentFilter.maxPrice = preset.max

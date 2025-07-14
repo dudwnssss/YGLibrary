@@ -42,17 +42,203 @@ enum FavoriteSortType: String, CaseIterable, Sortable {
 
 struct PriceFilter: Equatable {
     var minPrice: Int = 0
-    var maxPrice: Int = 50000
+    var maxPrice: Int = 100000
     var isEnabled: Bool = false
     
-    static let defaultMinPrice = 0
-    static let defaultMaxPrice = 50000
+    // 동적 범위 설정을 위한 프로퍼티
+    var dynamicMinPrice: Int = 0
+    var dynamicMaxPrice: Int = 100000
+    
+    // 기본 고정값 (fallback용)
+    static let defaultMinPrice: Int = 0
+    static let defaultMaxPrice: Int = 100000
+    
+    // 동적 범위 기반 초기화
+    init(dynamicRange: (min: Int, max: Int)? = nil) {
+        if let range = dynamicRange {
+            self.dynamicMinPrice = range.min
+            self.dynamicMaxPrice = range.max
+            self.minPrice = range.min
+            self.maxPrice = range.max
+        } else {
+            self.dynamicMinPrice = Self.defaultMinPrice
+            self.dynamicMaxPrice = Self.defaultMaxPrice
+            self.minPrice = Self.defaultMinPrice
+            self.maxPrice = Self.defaultMaxPrice
+        }
+    }
+    
+    // 가격 범위 업데이트
+    mutating func updateDynamicRange(min: Int, max: Int) {
+        self.dynamicMinPrice = min
+        self.dynamicMaxPrice = max
+        
+        // 현재 선택된 범위가 새로운 동적 범위를 벗어나면 조정
+        if self.minPrice < min {
+            self.minPrice = min
+        }
+        if self.maxPrice > max {
+            self.maxPrice = max
+        }
+    }
+    
+    // 필터 적용
+    func apply(to books: [Book]) -> [Book] {
+        guard isEnabled else { return books }
+        
+        return books.filter { book in
+            let price = book.pricing.salePrice > 0 ? book.pricing.salePrice : book.pricing.originPrice
+            return price >= minPrice && price <= maxPrice
+        }
+    }
+    
+    // 동적 프리셋 생성
+    func generateDynamicPresets() -> [(title: String, min: Int, max: Int)] {
+        let range = dynamicMaxPrice - dynamicMinPrice
+        
+        // 범위가 너무 작으면 기본 프리셋 사용
+        guard range > 20000 else { // 최소 2만원 범위는 있어야 의미 있음
+            return [
+                ("전체", dynamicMinPrice, dynamicMaxPrice)
+            ]
+        }
+        
+        let step = range / 4 // 4개 구간으로 나누기
+        
+        var presets: [(title: String, min: Int, max: Int)] = []
+        
+        // 첫 번째 구간
+        let firstMax = roundToTenThousands(dynamicMinPrice + step)
+        if dynamicMinPrice < firstMax {
+            presets.append((
+                title: "~\(formatPrice(firstMax))",
+                min: dynamicMinPrice,
+                max: firstMax
+            ))
+        }
+        
+        // 중간 구간들
+        for i in 1..<3 {
+            let rawMin = dynamicMinPrice + (step * i)
+            let rawMax = dynamicMinPrice + (step * (i + 1))
+            
+            let roundedMin = roundToTenThousands(rawMin)
+            let roundedMax = roundToTenThousands(rawMax)
+            
+            // 중복되지 않도록 처리
+            if roundedMin < roundedMax {
+                presets.append((
+                    title: "\(formatPrice(roundedMin))~\(formatPrice(roundedMax))",
+                    min: roundedMin,
+                    max: roundedMax
+                ))
+            }
+        }
+        
+        // 마지막 구간
+        let lastMin = roundToTenThousands(dynamicMinPrice + (step * 3))
+        if lastMin < dynamicMaxPrice {
+            presets.append((
+                title: "\(formatPrice(lastMin))~",
+                min: lastMin,
+                max: dynamicMaxPrice
+            ))
+        }
+        
+        return presets
+    }
+    
+    // 만원 단위 반올림 헬퍼 메서드
+    private func roundToTenThousands(_ price: Int) -> Int {
+        // 만원 미만은 만원으로 올림
+        if price < 10000 {
+            return 10000
+        }
+        
+        // 만원 단위로 반올림
+        let remainder = price % 10000
+        if remainder >= 5000 {
+            return price + (10000 - remainder) // 올림
+        } else {
+            return price - remainder // 내림
+        }
+    }
+    
+    // 가격 포맷팅 (세밀한 조작과 깔끔한 표시 모두 지원)
+    private func formatPrice(_ price: Int) -> String {
+        if price >= 10000 {
+            let manwon = price / 10000
+            let remainder = price % 10000
+            
+            if remainder == 0 {
+                return "\(manwon)만원"
+            } else if remainder % 1000 == 0 {
+                // 천원 단위로 떨어지는 경우 (ex: 15,000원 = 1만5천원)
+                let cheonwon = remainder / 1000
+                return "\(manwon)만\(cheonwon)천원"
+            } else {
+                // 소수점 표시
+                let formatted = String(format: "%.1f", Double(price) / 10000.0)
+                return "\(formatted)만원"
+            }
+        } else if price >= 1000 {
+            let cheonwon = price / 1000
+            return "\(cheonwon)천원"
+        } else {
+            return "\(price)원"
+        }
+    }
     
     var displayText: String {
         if !isEnabled {
             return "전체 가격"
         } else {
             return "\(minPrice.formatted())원 ~ \(maxPrice.formatted())원"
+        }
+    }
+}
+
+    // 가격 범위 계산을 위한 유틸리티
+extension PriceFilter {
+    // 책 목록에서 가격 범위 계산
+    static func calculatePriceRange(from books: [Book]) -> (min: Int, max: Int) {
+        guard !books.isEmpty else {
+            return (min: defaultMinPrice, max: defaultMaxPrice)
+        }
+        
+        let prices = books.map { book in
+            book.pricing.salePrice > 0 ? book.pricing.salePrice : book.pricing.originPrice
+        }.filter { $0 > 0 } // 0원인 책은 제외
+        
+        guard !prices.isEmpty else {
+            return (min: defaultMinPrice, max: defaultMaxPrice)
+        }
+        
+        let minPrice = prices.min() ?? defaultMinPrice
+        let maxPrice = prices.max() ?? defaultMaxPrice
+        
+        // 최소값은 0에서 시작하고, 최대값은 약간의 여유를 둠
+        let adjustedMax = Int(Double(maxPrice) * 1.1) // 10% 여유
+        
+        // 백원 단위 반올림으로 최소 만원 단위 적용
+        let roundedMax = roundToTenThousands(adjustedMax)
+        
+        return (min: 0, max: roundedMax)
+    }
+    
+    // 백원 단위 반올림하여 최소 만원 단위로 변환
+    private static func roundToTenThousands(_ price: Int) -> Int {
+        // 만원 미만은 만원으로 올림
+        if price < 10000 {
+            return 10000
+        }
+        
+        // 만원 단위로 반올림
+        let remainder = price % 10000
+        if remainder >= 5000 {
+            return price + (10000 - remainder) // 올림
+        } else {
+            return price - remainder // 내림
         }
     }
 }
@@ -108,7 +294,7 @@ struct FavoriteSortFilterView: View {
             YGCapsuleButton(
                 icon: "slider.horizontal.3",
                 title: "필터",
-                hasBadge: store.priceFilter.isEnabled
+                hasBadge: store.state.priceFilter.isEnabled
             ) {
                 router.navigate(
                     to: .priceFilterBottomSheet(store.state.priceFilter) { filter in

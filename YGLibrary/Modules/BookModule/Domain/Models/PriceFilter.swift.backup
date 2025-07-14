@@ -1,0 +1,151 @@
+//
+//  PriceFilter.swift
+//  YGLibrary
+//
+//  Created by 임영준 on 7/14/25.
+//
+
+import Foundation
+
+struct PriceFilter {
+    var minPrice: Int = 0
+    var maxPrice: Int = 100000
+    var isEnabled: Bool = false
+    
+    // 동적 범위 설정을 위한 프로퍼티
+    var dynamicMinPrice: Int = 0
+    var dynamicMaxPrice: Int = 100000
+    
+    // 기본 고정값 (fallback용)
+    static let defaultMinPrice: Int = 0
+    static let defaultMaxPrice: Int = 100000
+    
+    // 동적 범위 기반 초기화
+    init(dynamicRange: (min: Int, max: Int)? = nil) {
+        if let range = dynamicRange {
+            self.dynamicMinPrice = range.min
+            self.dynamicMaxPrice = range.max
+            self.minPrice = range.min
+            self.maxPrice = range.max
+        } else {
+            self.dynamicMinPrice = Self.defaultMinPrice
+            self.dynamicMaxPrice = Self.defaultMaxPrice
+            self.minPrice = Self.defaultMinPrice
+            self.maxPrice = Self.defaultMaxPrice
+        }
+    }
+    
+    // 가격 범위 업데이트
+    mutating func updateDynamicRange(min: Int, max: Int) {
+        self.dynamicMinPrice = min
+        self.dynamicMaxPrice = max
+        
+        // 현재 선택된 범위가 새로운 동적 범위를 벗어나면 조정
+        if self.minPrice < min {
+            self.minPrice = min
+        }
+        if self.maxPrice > max {
+            self.maxPrice = max
+        }
+    }
+    
+    // 필터 적용
+    func apply(to books: [Book]) -> [Book] {
+        guard isEnabled else { return books }
+        
+        return books.filter { book in
+            let price = book.pricing.salePrice > 0 ? book.pricing.salePrice : book.pricing.originPrice
+            return price >= minPrice && price <= maxPrice
+        }
+    }
+    
+    // 동적 프리셋 생성
+    func generateDynamicPresets() -> [(title: String, min: Int, max: Int)] {
+        let range = dynamicMaxPrice - dynamicMinPrice
+        
+        // 범위가 너무 작으면 기본 프리셋 사용
+        guard range > 1000 else {
+            return [
+                ("전체", dynamicMinPrice, dynamicMaxPrice)
+            ]
+        }
+        
+        let step = range / 4 // 4개 구간으로 나누기
+        
+        var presets: [(title: String, min: Int, max: Int)] = []
+        
+        // 첫 번째 구간
+        if dynamicMinPrice < step {
+            presets.append((
+                title: "~\(formatPrice(dynamicMinPrice + step))",
+                min: dynamicMinPrice,
+                max: dynamicMinPrice + step
+            ))
+        }
+        
+        // 중간 구간들
+        for i in 1..<3 {
+            let min = dynamicMinPrice + (step * i)
+            let max = dynamicMinPrice + (step * (i + 1))
+            presets.append((
+                title: "\(formatPrice(min))~\(formatPrice(max))",
+                min: min,
+                max: max
+            ))
+        }
+        
+        // 마지막 구간
+        let lastMin = dynamicMinPrice + (step * 3)
+        if lastMin < dynamicMaxPrice {
+            presets.append((
+                title: "\(formatPrice(lastMin))~",
+                min: lastMin,
+                max: dynamicMaxPrice
+            ))
+        }
+        
+        return presets
+    }
+    
+    // 가격 포맷팅 (만원 단위로 표시)
+    private func formatPrice(_ price: Int) -> String {
+        if price >= 10000 {
+            let manwon = price / 10000
+            let remainder = price % 10000
+            
+            if remainder == 0 {
+                return "\(manwon)만원"
+            } else {
+                return "\(manwon)만\(remainder)원"
+            }
+        } else {
+            return "\(price)원"
+        }
+    }
+}
+
+// 가격 범위 계산을 위한 유틸리티
+extension PriceFilter {
+    // 책 목록에서 가격 범위 계산
+    static func calculatePriceRange(from books: [Book]) -> (min: Int, max: Int) {
+        guard !books.isEmpty else {
+            return (min: defaultMinPrice, max: defaultMaxPrice)
+        }
+        
+        let prices = books.map { book in
+            book.pricing.salePrice > 0 ? book.pricing.salePrice : book.pricing.originPrice
+        }.filter { $0 > 0 } // 0원인 책은 제외
+        
+        guard !prices.isEmpty else {
+            return (min: defaultMinPrice, max: defaultMaxPrice)
+        }
+        
+        let minPrice = prices.min() ?? defaultMinPrice
+        let maxPrice = prices.max() ?? defaultMaxPrice
+        
+        // 최소값은 0에서 시작하고, 최대값은 약간의 여유를 둠
+        let adjustedMax = Int(Double(maxPrice) * 1.1) // 10% 여유
+        
+        return (min: 0, max: adjustedMax)
+    }
+}

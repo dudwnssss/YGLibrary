@@ -80,7 +80,7 @@ struct ModuleFactoryImpl: ModuleFactory {
             return vc
             
         case .favoriteSearchModal(let onQuerySelected):
-            let view = FavoriteSearchModalView(onQuerySelected: onQuerySelected)
+            let view = FavoriteSearchBottomSheetView(onQuerySelected: onQuerySelected)
             let vc = UIHostingController(rootView: view)
             vc.modalPresentationStyle = .pageSheet
             if let sheet = vc.sheetPresentationController {

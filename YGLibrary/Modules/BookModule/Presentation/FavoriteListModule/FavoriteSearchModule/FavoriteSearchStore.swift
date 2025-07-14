@@ -83,7 +83,6 @@ final class FavoriteSearchStore: Store {
     }
 }
 
-// MARK: - Private Methods
 extension FavoriteSearchStore {
     private func loadFavoriteBooks() async {
         state.isLoading = true
@@ -113,7 +112,6 @@ extension FavoriteSearchStore {
         var suggestions: [SearchSuggestion] = []
         
         for book in state.favoriteBooks {
-            // 책 제목 매칭 (초성 포함)
             if book.title.matchesKoreanSearch(query) {
                 suggestions.append(SearchSuggestion(
                     id: "\(book.isbn)-title",
@@ -124,7 +122,6 @@ extension FavoriteSearchStore {
                 ))
             }
             
-            // 저자 매칭 (초성 포함)
             for author in book.authors {
                 if author.matchesKoreanSearch(query) {
                     suggestions.append(SearchSuggestion(
@@ -137,7 +134,6 @@ extension FavoriteSearchStore {
                 }
             }
             
-            // 출판사 매칭 (초성 포함)
             if book.publisher.matchesKoreanSearch(query) {
                 suggestions.append(SearchSuggestion(
                     id: "\(book.isbn)-publisher",
@@ -149,7 +145,6 @@ extension FavoriteSearchStore {
             }
         }
         
-        // 중복 제거 및 정렬 (책 제목 > 저자 > 출판사 순)
         let uniqueSuggestions = Array(Set(suggestions.map { $0.text }))
             .compactMap { text in
                 suggestions.first { $0.text == text }
@@ -161,7 +156,7 @@ extension FavoriteSearchStore {
                 return lhs.text < rhs.text
             }
         
-        state.suggestions = Array(uniqueSuggestions.prefix(10)) // 최대 10개
+        state.suggestions = Array(uniqueSuggestions.prefix(10))
     }
 }
 

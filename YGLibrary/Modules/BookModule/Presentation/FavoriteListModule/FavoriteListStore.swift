@@ -35,6 +35,11 @@ final class FavoriteListStore: Store {
         func isFavorite(_ book: Book) -> Bool {
             return favoriteUniqueIds.contains(book.id)
         }
+        
+        // 동적 가격 범위 계산
+        var dynamicPriceRange: (min: Int, max: Int) {
+            return PriceFilter.calculatePriceRange(from: allBooks)
+        }
     }
     
     @Published private(set) var state = State()
@@ -85,7 +90,11 @@ final class FavoriteListStore: Store {
             applyFiltersAndSort()
             
         case .updatePriceFilter(let filter):
-            state.priceFilter = filter
+            // 동적 범위를 유지하며 필터 업데이트
+            var updatedFilter = filter
+            let currentRange = state.dynamicPriceRange
+            updatedFilter.updateDynamicRange(min: currentRange.min, max: currentRange.max)
+            state.priceFilter = updatedFilter
             applyFiltersAndSort()
             
         case .openSearchModal:
@@ -128,6 +137,11 @@ extension FavoriteListStore {
             
             await MainActor.run {
                 state.allBooks = books
+                
+                // 동적 가격 범위 계산 및 업데이트
+                let priceRange = state.dynamicPriceRange
+                state.priceFilter.updateDynamicRange(min: priceRange.min, max: priceRange.max)
+                
                 applyFiltersAndSort()
                 state.isLoading = false
                 state.isError = false
@@ -147,6 +161,11 @@ extension FavoriteListStore {
             
             await MainActor.run {
                 state.allBooks = books
+                
+                // 동적 가격 범위 업데이트
+                let priceRange = state.dynamicPriceRange
+                state.priceFilter.updateDynamicRange(min: priceRange.min, max: priceRange.max)
+                
                 applyFiltersAndSort()
                 state.isError = false
             }
@@ -171,10 +190,7 @@ extension FavoriteListStore {
         
         // 가격 필터링
         if state.priceFilter.isEnabled {
-            filteredBooks = filteredBooks.filter { book in
-                let price = book.pricing.salePrice > 0 ? book.pricing.salePrice : book.pricing.originPrice
-                return price >= state.priceFilter.minPrice && price <= state.priceFilter.maxPrice
-            }
+            filteredBooks = state.priceFilter.apply(to: filteredBooks)
         }
         
         // 정렬

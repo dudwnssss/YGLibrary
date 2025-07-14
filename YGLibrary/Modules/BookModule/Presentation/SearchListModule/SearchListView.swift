@@ -13,18 +13,20 @@ struct SearchListView: View {
     
     var body: some View {
         VStack(spacing: .zero) {
-            // 검색바
             SearchBarView(query: store.query) { text in
                 store.dispatch(.search(text))
             }
             
-            // 메인 콘텐츠
             Group {
                 if !networkMonitor.isConnected {
-                    
+                    //네트워크 에러
                     networkErrorView
                     
-                } else if store.isLoading && store.state.books.isEmpty {
+                } else if store.isError {
+                    // 서버통신 에러
+                    errorView
+                    
+                }else if store.isLoading && store.state.books.isEmpty {
                     // 초기 로딩
                     loadingView
                     
@@ -116,6 +118,20 @@ struct SearchListView: View {
                 .font(.system(size: 50, weight: .light))
                 .foregroundColor(.gray.opacity(0.6))
             Text("네트워크 연결 상태를 확인해주세요")
+                .font(.system(size: 16))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .lineSpacing(2)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    private var errorView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "network.slash")
+                .font(.system(size: 50, weight: .light))
+                .foregroundColor(.gray.opacity(0.6))
+            Text("오류가 발생했어요.\n잠시 후 다시 시도해주세요.")
                 .font(.system(size: 16))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)

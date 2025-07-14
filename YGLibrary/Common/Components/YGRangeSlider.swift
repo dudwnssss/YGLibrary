@@ -15,6 +15,13 @@ struct YGRangeSlider: View {
     
     private let trackHeight: CGFloat = 4
     private let thumbDiameter: CGFloat = 24
+    private let snapStep: Double = 1000 // 천원 단위 스냅 (세밀한 조작)
+    
+    // 천원 단위로 스냅하는 헬퍼 함수
+    private func snapToThousands(_ value: Double) -> Double {
+        let rounded = round(value / snapStep) * snapStep
+        return max(minValue, min(maxValue, rounded))
+    }
     
     var body: some View {
         GeometryReader { geometry in
@@ -45,8 +52,9 @@ struct YGRangeSlider: View {
                         DragGesture()
                             .onChanged { value in
                                 let newPercent = max(0, min(1, value.location.x / trackWidth))
-                                let newValue = minValue + newPercent * (maxValue - minValue)
-                                lowerValue = min(newValue, upperValue - 2000)
+                                let rawValue = minValue + newPercent * (maxValue - minValue)
+                                let snappedValue = snapToThousands(rawValue)
+                                lowerValue = min(snappedValue, upperValue - snapStep)
                             }
                     )
                 
@@ -59,8 +67,9 @@ struct YGRangeSlider: View {
                         DragGesture()
                             .onChanged { value in
                                 let newPercent = max(0, min(1, value.location.x / trackWidth))
-                                let newValue = minValue + newPercent * (maxValue - minValue)
-                                upperValue = max(newValue, lowerValue + 2000)
+                                let rawValue = minValue + newPercent * (maxValue - minValue)
+                                let snappedValue = snapToThousands(rawValue)
+                                upperValue = max(snappedValue, lowerValue + snapStep)
                             }
                     )
             }

@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct FavoriteSearchModalView: View {
+struct FavoriteSearchBottomSheetView: View {
     let onQuerySelected: (String) -> Void
     @Environment(\.dismiss) private var dismiss
     @StateObject private var store: FavoriteSearchStore
@@ -197,7 +197,7 @@ struct FavoriteSearchModalView: View {
 }
 
 #Preview {
-    FavoriteSearchModalView { query in
+    FavoriteSearchBottomSheetView { query in
         print("Selected query: \(query)")
     }
 }

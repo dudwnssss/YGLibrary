@@ -19,11 +19,11 @@ final class SearchListStore: Store {
         case search(String)
         case loadNextPage
         case toggleFavorite(Book)
-        case bookAppeared(Book) // 새로운 액션 추가
+        case bookAppeared(Book)
     }
     
     struct State {
-        var books: [Book] = []             // 최종 표시될 책 목록 (중복 제거됨)
+        var books: [Book] = []
         var meta: MetaResponse<BookDTO>.Meta?
         var sortType: SearchSortType = .accuracy
         var isLoading: Bool = false
@@ -33,7 +33,6 @@ final class SearchListStore: Store {
         var currentPage: Int = 1
         var favoriteUniqueIds: Set<String> = []
         
-        // 내부 상태 (UI에 영향 주지 않음)
         private var seenUniqueIds: Set<String> = []
         private var isLoadingNextPage: Bool = false // 중복 로딩 방지
         private var lastTriggeredUniqueId: String = "" // 무한스크롤 중복 방지
@@ -51,7 +50,6 @@ final class SearchListStore: Store {
             return favoriteUniqueIds.contains(book.id)
         }
         
-        // 성능 최적화: 증분 업데이트
         mutating func addBooksIncremental(_ newBooks: [Book]) {
             var addedBooks: [Book] = []
             
@@ -84,7 +82,6 @@ final class SearchListStore: Store {
             isLoadingNextPage = loading
         }
         
-        // 무한스크롤 트리거 로직
         mutating func checkInfiniteScrollTrigger(for book: Book) -> Bool {
             let booksCount = books.count
             
@@ -107,16 +104,9 @@ final class SearchListStore: Store {
     @Dependency(\.favoriteService) private var favoriteService
     @Dependency(\.toast) private var toast
     
-    // MARK: - Task Management
     private var currentSearchTask: Task<Void, Never>?
     private var currentLoadMoreTask: Task<Void, Never>?
     private var cancellables = Set<AnyCancellable>()
-    
-    // 호환성을 위한 computed properties
-    var query: String { state.query }
-    var sortType: SearchSortType { state.sortType }
-    var isLoading: Bool { state.isLoading }
-    var isLoadingMore: Bool { state.isLoadingMore }
     
     init() {
         setSubscription()
@@ -249,13 +239,11 @@ extension SearchListStore {
                 state.meta = response.meta
                 
                 if isLoadingMore {
-                    // 🚀 성능 최적화: 증분 업데이트로 깜빡임 방지
                     let beforeCount = state.books.count
                     state.addBooksIncremental(newBooks)
                     let afterCount = state.books.count
                     print("➕ Books added: \(beforeCount) -> \(afterCount) (+\(afterCount - beforeCount))")
                 } else {
-                    // 🔄 새 검색: 전체 초기화
                     state.resetBooks(newBooks)
                     print("🆕 Books reset: \(newBooks.count) books")
                 }
@@ -279,7 +267,7 @@ extension SearchListStore {
                     case .networkUnavailable, .timeout, .connectionLost:
                         toast.show(.init(message: error.localizedDescription, icon: "info.circle"))
                     default:
-                        break
+                        toast.show(.init(message: "오류가 발생했어요.\n잠시 후 다시 시도해주세요.", icon: "info.circle"))
                     }
                 }
             }

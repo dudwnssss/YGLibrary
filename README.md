@@ -1,88 +1,117 @@
 # YGLibrary
 
-iOS 도서 검색 및 즐겨찾기 관리 애플리케이션
+> 카카오 도서 검색 API를 활용한 iOS 도서 검색 및 즐겨찾기 관리 애플리케이션
 
-## 📋 개요
+## 📱 주요 기능
 
-카카오 도서 검색 API를 활용한 도서 검색 및 즐겨찾기 관리 앱입니다. TCA(The Composable Architecture)를 참고한 MVI Pattern을 적용하여 확장 가능하고 테스트 가능한 구조로 설계했습니다.
+- **도서 검색**: 카카오 도서 검색 API를 통한 실시간 도서 검색
+- **무한 스크롤**: 페이지네이션을 통한 대용량 검색 결과 처리
+- **즐겨찾기 관리**: 로컬 데이터베이스를 활용한 도서 즐겨찾기 기능
+- **정렬 및 필터링**: 정확도/최신순/가격순 정렬, 가격 범위 필터링
+- **도서 상세 정보**: 상세 페이지에서 도서 정보 확인 및 즐겨찾기 관리
 
 ## 🛠 빌드 방법
 
 ### 요구사항
-- **Swift**: 5.0
-- **iOS**: 16.0+
-- **Xcode**: 16.2
+- **Xcode**: 16.2+
+- **iOS Deployment Target**: 16.0+
+- **Swift**: 5.0+
 
 ### 빌드 단계
-1. 프로젝트 클론 후 Xcode로 열기
-2. Swift Package Manager를 통한 의존성 자동 해결
-3. API 키 설정 (카카오 REST API 키 필요)
-4. 시뮬레이터 또는 실제 기기에서 빌드 및 실행
 
-### API 키 설정
-`YGLibrary/Application/Secrets.swift` 파일 생성 후 다음 내용 추가:
-```swift
-enum Secrets {
-    static let kakaoRestAPIKey = "YOUR_KAKAO_REST_API_KEY"
-}
-```
+1. **프로젝트 클론**
+   ```bash
+   git clone <repository-url>
+   cd YGLibrary
+   ```
+
+2. **Xcode에서 프로젝트 열기**
+   ```bash
+   open YGLibrary.xcodeproj
+   ```
+
+3. **Swift Package Manager 의존성 해결**
+   - Xcode에서 자동으로 의존성이 다운로드됩니다
+   - 수동으로 해결하려면: File → Add Package Dependencies
+
+4. **API 키 설정**
+   ```swift
+   // YGLibrary/Application/Secrets.swift 파일 생성
+   enum Secrets {
+       static let kakaoRestAPIKey = "YOUR_KAKAO_REST_API_KEY"
+   }
+   ```
+
+5. **빌드 및 실행**
+   - `Cmd + R`로 시뮬레이터에서 실행
+   - 실제 기기에서 테스트 시 개발자 계정 설정 필요
 
 ## 📚 사용 프레임워크
 
-### Apple Frameworks
-- **SwiftUI**: 메인 UI 프레임워크
-- **UIKit**: 탭바, 네비게이션 등 일부 UI 구성요소
-- **Combine**: 리액티브 프로그래밍 및 상태 관리
+### Apple Native Frameworks
+- **SwiftUI**: 선언적 UI 프레임워크를 활용한 모던 iOS 개발
+- **Combine**: 반응형 프로그래밍과 상태 관리
+- **Foundation**: 기본 데이터 타입 및 유틸리티
 
-### Third-party Libraries
-- **[Dependencies](https://github.com/pointfreeco/swift-dependencies)** (1.0.0+): 의존성 주입 프레임워크
-- **[GRDB](https://github.com/groue/GRDB.swift)** (6.0.0+): SQLite 데이터베이스 ORM
-- **[Kingfisher](https://github.com/onevcat/Kingfisher)** (7.0.0+): 이미지 캐싱 및 비동기 로딩
+### External Dependencies
+- **[Dependencies](https://github.com/pointfreeco/swift-dependencies)** (1.9.2+)
+  - Point-Free의 의존성 주입 프레임워크
+  - 컴파일 타임 안전성과 테스트 용이성 제공
+  
+- **[GRDB](https://github.com/groue/GRDB.swift)** (master branch)
+  - SQLite 데이터베이스 ORM
+  - 타입 안전한 쿼리와 마이그레이션 지원
+  
+- **[Kingfisher](https://github.com/onevcat/Kingfisher)** (8.4.0+)
+  - 이미지 다운로드, 캐싱, 표시를 위한 라이브러리
+  - 메모리 및 디스크 캐싱으로 성능 최적화
 
 ## 🏗 프로젝트 구조
 
 ```
 YGLibrary/
-├── Application/                    # 앱 진입점 및 설정
-│   ├── AppDelegate.swift          # 앱 델리게이트
-│   ├── SceneDelegate.swift        # 씬 델리게이트 (네비게이션 초기화)
-│   └── Assets.xcassets           # 이미지 및 컬러 에셋
+├── Application/                       # 앱 진입점 및 설정
+│   ├── AppDelegate.swift             # 앱 생명주기 관리
+│   ├── SceneDelegate.swift           # 씬 기반 UI 관리
+│   └── Assets.xcassets              # 이미지 및 컬러 리소스
 │
-├── Modules/                       # 기능별 모듈 (Clean Architecture)
-│   ├── Store.swift               # Store 프로토콜 정의
-│   ├── MainTabModule/            # 메인 탭바 모듈
-│   └── BookModule/               # 도서 관련 기능 모듈
-│       ├── SearchListModule/     # 도서 검색 (Store + View)
-│       ├── FavoriteListModule/   # 즐겨찾기 관리 (Store + View)
-│       ├── BookDetailModule/     # 도서 상세 정보 (Store + View)
-│       └── SubModules/           # 공통 UI 컴포넌트
-│           ├── BookRowView.swift
-│           ├── SearchBarView.swift
-│           └── SortFilterView.swift
+├── Modules/                          # 기능별 모듈화
+│   ├── Store.swift                   # Store 프로토콜 정의
+│   ├── MainTabModule/                # 메인 탭바 모듈
+│   │   └── MainTabBarController.swift
+│   └── BookModule/                   # 도서 관련 기능
+│       ├── Domain/                   # 도메인 모델
+│       │   └── Book.swift
+│       └── Presentation/             # 프레젠테이션 레이어
+│           ├── SearchListModule/     # 도서 검색 기능
+│           ├── FavoriteListModule/   # 즐겨찾기 관리
+│           ├── BookDetailModule/     # 도서 상세 정보
+│           └── SubViews/             # 공통 UI 컴포넌트
 │
-├── Services/                      # 데이터 레이어
-│   ├── Network/                  # 네트워크 서비스
-│   │   ├── NetworkLogger.swift   # 네트워크 요청/응답 로깅
-│   │   ├── Request/              # API 요청 모델
-│   │   ├── Services/             # 서비스 구현체
-│   │   └── DataMapping/          # DTO → Domain 모델 변환
-│   └── Database/                 # 로컬 데이터베이스
-│       ├── DatabaseService.swift # GRDB 설정 및 관리
-│       ├── Repositories/         # Repository 패턴 구현
-│       └── DataMapping/          # DB ↔ Domain 모델 변환
+├── Services/                         # 데이터 레이어
+│   ├── Network/                      # 네트워크 서비스
+│   │   ├── Services/                 # 비즈니스 로직
+│   │   ├── Request/                  # API 요청 모델
+│   │   ├── DataMapping/              # DTO ↔ Domain 변환
+│   │   └── NetworkLogger.swift       # 네트워크 디버깅
+│   └── Database/                     # 로컬 데이터베이스
+│       ├── DatabaseService.swift     # GRDB 설정 및 관리
+│       ├── Repositories/             # Repository 패턴
+│       └── DataMapping/              # DB ↔ Domain 변환
 │
-└── Common/                       # 공통 모듈
-    ├── Router.swift              # 네비게이션 관리
-    ├── ModuleFactory.swift       # 뷰 컨트롤러 팩토리
-    ├── Components/               # 재사용 가능한 UI 컴포넌트
-    ├── Extensions/               # Swift 타입 확장
-    ├── Constants/                # 상수 정의
-    └── Utils/                    # 유틸리티 함수
+└── Common/                           # 공통 모듈
+    ├── Router.swift                  # 네비게이션 관리
+    ├── Components/                   # 재사용 가능한 UI
+    ├── Extensions/                   # Swift 타입 확장
+    ├── Constants/                    # 상수 정의
+    └── Utils/                        # 유틸리티 함수
 ```
 
 ## 🎯 주요 구현 포인트
 
-### 1. Store Pattern (TCA 패턴 참고)
+### 1. Store Pattern (TCA 영감)
+
+**핵심 구현**
 ```swift
 @dynamicMemberLookup
 @MainActor
@@ -95,25 +124,29 @@ protocol Store: ObservableObject {
 }
 ```
 
-**구현 특징:**
-- `@dynamicMemberLookup`을 활용한 상태 접근 간소화
+**특징**
+- `@dynamicMemberLookup`을 통한 상태 접근 간소화 (`store.books` 대신 `store.state.books`)
 - 타입 안전한 Action 기반 상태 변경
-- SwiftUI의 `@ObservableObject`와 완벽 호환
+- SwiftUI `@ObservableObject`와 완벽 호환
 - 단방향 데이터 플로우로 예측 가능한 상태 관리
 
-### 2. Dependency Injection (Dependencies 라이브러리)
+### 2. Dependency Injection System
+
+**Dependencies 라이브러리 활용**
 ```swift
 @Dependency(\.router) private var router
 @Dependency(\.bookService) private var bookService
 @Dependency(\.favoriteService) private var favoriteService
 ```
 
-**구현 특징:**
-- 컴파일 타임 의존성 해결
-- 테스트용 Mock 객체 쉬운 주입
-- 런타임 에러 없는 안전한 의존성 관리
+**장점**
+- 컴파일 타임 의존성 해결로 런타임 에러 방지
+- 테스트용 Mock 객체 간편한 주입
+- 프로토콜 기반 추상화로 느슨한 결합
 
 ### 3. Repository Pattern + GRDB
+
+**Repository 인터페이스**
 ```swift
 protocol BookRepository {
     func getFavoriteBooks() async throws -> [Book]
@@ -123,14 +156,16 @@ protocol BookRepository {
 }
 ```
 
-**구현 특징:**
+**구현 특징**
 - 데이터 소스 추상화로 테스트 용이성 향상
 - GRDB의 타입 안전한 쿼리 빌더 활용
-- async/await 기반 비동기 처리
+- async/await 기반 현대적 비동기 처리
+- 컴파일 타임 SQL 검증
 
-### 4. 무한 스크롤 구현
+### 4. 무한 스크롤 최적화
+
+**핵심 로직**
 ```swift
-// SearchListStore 내부
 case .bookAppeared(let book):
     guard state.canLoadMore,
           book.isbn == state.books.last?.isbn,
@@ -139,30 +174,58 @@ case .bookAppeared(let book):
     await loadNextPage()
 ```
 
-**구현 특징:**
-- 중복 요청 방지 로직
+**최적화 포인트**
+- 중복 요청 방지 메커니즘
 - 마지막 아이템 감지를 통한 자동 로딩
-- 페이지네이션 상태 관리
+- 로딩 상태 관리로 UI 플리커링 방지
+- 메모리 효율적인 페이지네이션
 
-### 5. 커스텀 네트워크 로거
+### 5. 고유 ID 생성 시스템
+
+**중복 제거 로직**
+```swift
+private static func generateUniqueId(
+    isbn: String, 
+    title: String, 
+    publisher: String, 
+    dateTime: Date?, 
+    url: String
+) -> String {
+    let dateString = dateTime?.ISO8601Format() ?? ""
+    let combinedString = "\(isbn)_\(title)_\(publisher)_\(dateString)_\(url)"
+    return combinedString.data(using: .utf8)?.base64EncodedString() ?? UUID().uuidString
+}
+```
+
+**특징**
+- 복합 키 기반 고유 ID 생성
+- API 응답의 중복 도서 자동 필터링
+- Base64 인코딩으로 안전한 ID 생성
+
+### 6. 네트워크 로깅 시스템
+
+**구조화된 로깅**
 ```swift
 struct NetworkLogger {
     static func log(request: URLRequest) {
-        // 요청 정보 포맷팅 및 출력
+        // 📤 REQUEST 정보 포맷팅
     }
     
     static func log(response: URLResponse?, data: Data?, error: Error?) {
-        // 응답 정보 포맷팅 및 출력
+        // 📥 RESPONSE 정보 포맷팅
     }
 }
 ```
 
-**구현 특징:**
+**기능**
 - 요청/응답 정보 상세 로깅
-- Authorization 헤더 마스킹 처리
-- JSON 응답 예쁘게 출력
+- Authorization 헤더 자동 마스킹
+- JSON 응답 예쁘게 포맷팅
+- 디버깅 효율성 극대화
 
-### 6. 중앙화된 네비게이션 관리
+### 7. 중앙화된 네비게이션 관리
+
+**Router 시스템**
 ```swift
 enum NavigationType {
     case push
@@ -178,12 +241,15 @@ protocol Router {
 }
 ```
 
-**구현 특징:**
-- 타입 안전한 네비게이션
+**특징**
+- 타입 안전한 네비게이션 목적지
 - 다양한 프레젠테이션 스타일 지원
 - 중앙화된 화면 전환 로직
+- SwiftUI + UIKit 하이브리드 지원
 
-### 7. 가격 필터링 기능
+### 8. 고급 필터링 시스템
+
+**가격 필터 구현**
 ```swift
 struct PriceFilter {
     var minPrice: Int = 0
@@ -193,53 +259,71 @@ struct PriceFilter {
     func apply(to books: [Book]) -> [Book] {
         guard isEnabled else { return books }
         return books.filter { book in
-            let price = book.salePrice > 0 ? book.salePrice : book.price
+            let price = book.pricing.salePrice > 0 ? 
+                       book.pricing.salePrice : book.pricing.originPrice
             return price >= minPrice && price <= maxPrice
         }
     }
 }
 ```
 
-**구현 특징:**
+**특징**
 - 판매가 우선, 정가 대체 로직
 - 실시간 필터링 적용
-- 범위 슬라이더를 통한 직관적 UI
-
-## 🔧 기술적 특징
-
-### 아키텍처
-- **Clean Architecture**: 계층별 관심사 분리
-- **MVVM + Store Pattern**: 단방향 데이터 플로우
-- **Repository Pattern**: 데이터 소스 추상화
-
-### 반응형 프로그래밍
-- **Combine**: Publisher/Subscriber 패턴으로 데이터 스트림 관리
-- **@Published**: 상태 변경 자동 감지 및 UI 업데이트
-
-### 성능 최적화
-- **Kingfisher**: 이미지 메모리/디스크 캐싱
-- **LazyVStack**: 대용량 리스트 최적화
-- **중복 제거**: ISBN 기반 중복 도서 필터링
-
-### 에러 처리
-- **Result Type**: 성공/실패 케이스 명시적 처리
-- **Toast 시스템**: 사용자 친화적 에러 메시지
-- **Graceful Degradation**: 네트워크 오류 시 적절한 대체 동작
+- 범위 슬라이더 UI 통합
 
 ## 🧪 테스트 고려사항
 
-### 의존성 주입을 통한 테스트 용이성
+### 아키텍처적 테스트 용이성
+- **의존성 주입**: Mock 객체를 통한 격리된 단위 테스트
+- **Store Pattern**: 상태 변화 로직의 독립적 테스트
+- **Repository Pattern**: 데이터 레이어 추상화로 테스트 더블 활용
+
+### 테스트 환경 구성
 ```swift
+// 테스트용 의존성 설정 예시
 extension DependencyValues {
     var bookService: BookService {
         get { self[BookServiceKey.self] }
         set { self[BookServiceKey.self] = newValue }
     }
 }
+
+// Mock 서비스 주입
+withDependencies {
+    $0.bookService = MockBookService()
+} operation: {
+    // 테스트 실행
+}
 ```
 
-### Mock 객체 활용
-- 네트워크 서비스 Mock으로 단위 테스트 가능
-- 데이터베이스 인메모리 테스트 환경 구성 가능
-- Store 로직 독립적 테스트 가능
+## 🚀 기술적 특징
 
+### 성능 최적화
+- **LazyVStack**: 대용량 리스트 렌더링 최적화
+- **Kingfisher**: 이미지 메모리/디스크 캐싱
+- **중복 제거**: 효율적인 메모리 사용
+- **비동기 처리**: async/await 기반 논블로킹 UI
+
+### 사용자 경험
+- **실시간 검색**: 타이핑과 동시에 검색 결과 업데이트
+- **스켈레톤 로딩**: 로딩 상태의 시각적 피드백
+- **에러 핸들링**: 사용자 친화적 오류 메시지
+- **접근성**: VoiceOver 지원 고려
+
+### 코드 품질
+- **타입 안전성**: 컴파일 타임 에러 검출
+- **모듈화**: 기능별 분리된 아키텍처
+- **확장성**: 새로운 기능 추가 용이
+- **유지보수성**: 명확한 책임 분리
+
+## 📝 프로젝트 정보
+
+- **개발 기간**: 약 1주
+- **개발자**: 임영준
+- **프로젝트 유형**: 과제전형용 포트폴리오
+- **라이선스**: MIT License
+
+---
+
+*이 프로젝트는 현대적인 iOS 개발 패턴과 최신 기술 스택을 활용하여 확장 가능하고 유지보수가 용이한 앱 아키텍처를 구현한 샘플 프로젝트입니다.*
