@@ -38,7 +38,6 @@ actor DatabaseService {
             dbQueue = try DatabaseQueue(path: databasePath)
             try Self.createTables(in: dbQueue)
         } catch {
-            print("❌ Database setup failed: \(error)")
             throw DatabaseError.initializationFailed(error.localizedDescription)
         }
     }

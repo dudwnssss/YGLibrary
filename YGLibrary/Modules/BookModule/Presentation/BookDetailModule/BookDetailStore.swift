@@ -55,7 +55,6 @@ final class BookDetailStore: Store {
         case .onAppear:
             state.isFavorite = favoriteService.isFavorite(uniqueId: state.book.id)
         case .toggleFavorite:
-            // Actor handles concurrency automatically
             Task {
                 await MainActor.run {
                     state.isLoading = true

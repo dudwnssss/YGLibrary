@@ -178,7 +178,7 @@ final class APIDetailViewController: UIViewController, UITextViewDelegate {
         textView.autocorrectionType = .no
         textView.spellCheckingType = .no
         textView.alwaysBounceVertical = true
-        textView.textContainerInset = UIEdgeInsets(top: 12, left: 8, bottom: 60, right: 8) // 하단 여백 증가
+        textView.textContainerInset = UIEdgeInsets(top: 12, left: 8, bottom: 60, right: 8)
         textView.layer.cornerRadius = 0
         textView.delegate = self
         
@@ -206,7 +206,7 @@ final class APIDetailViewController: UIViewController, UITextViewDelegate {
         bottomToolbar.backgroundColor = UIColor.systemBackground
         bottomToolbar.layer.borderWidth = 0.5
         bottomToolbar.layer.borderColor = UIColor.systemGray4.cgColor
-        bottomToolbar.alpha = 0 // 초기에는 숨김
+        bottomToolbar.alpha = 0
         
         let switchLabel = UILabel()
         switchLabel.text = "모킹 활성화"
@@ -358,9 +358,7 @@ final class APIDetailViewController: UIViewController, UITextViewDelegate {
             dismissKeyboard()
         }
     }
-    
-    // MARK: - UI 업데이트
-    
+        
     private func updateUI(forEditMode isEditMode: Bool) {
         if isEditMode {
             navigationItem.rightBarButtonItem?.isEnabled = true

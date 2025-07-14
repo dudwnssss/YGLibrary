@@ -97,7 +97,6 @@ extension FavoriteSearchStore {
         } catch {
             await MainActor.run {
                 state.isLoading = false
-                print("❌ 즐겨찾기 책 로드 실패: \(error)")
             }
         }
     }

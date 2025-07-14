@@ -23,20 +23,19 @@ final class FavoriteListStore: Store {
     }
     
     struct State {
-        var allBooks: [Book] = []           // 전체 즐겨찾기 책들
-        var books: [Book] = []              // 필터링/정렬된 결과
+        var allBooks: [Book] = []
+        var books: [Book] = []
         var isLoading: Bool = false
         var isError: Bool = false
         var favoriteUniqueIds: Set<String> = []
-        var query: String = ""              // 검색어
-        var sortType: FavoriteSortType = .ascending // 정렬 타입
-        var priceFilter: PriceFilter = PriceFilter() // 가격 필터
+        var query: String = ""
+        var sortType: FavoriteSortType = .ascending
+        var priceFilter: PriceFilter = PriceFilter()
         
         func isFavorite(_ book: Book) -> Bool {
             return favoriteUniqueIds.contains(book.id)
         }
         
-        // 동적 가격 범위 계산
         var dynamicPriceRange: (min: Int, max: Int) {
             return PriceFilter.calculatePriceRange(from: allBooks)
         }
@@ -57,7 +56,6 @@ final class FavoriteListStore: Store {
     func dispatch(_ action: Action) {
         switch action {
         case .onAppear:
-            // 최초 로딩시에만 로딩 상태 표시
             if state.allBooks.isEmpty {
                 state.isLoading = true
             }
@@ -67,7 +65,6 @@ final class FavoriteListStore: Store {
             }
             
         case .refresh:
-            // 🎯 새로고침 시에만 실제 즐겨찾기 상태 반영
             Task {
                 await refreshFromDatabase()
             }
@@ -76,7 +73,6 @@ final class FavoriteListStore: Store {
             router.navigate(to: .bookDetail(book), type: .push)
             
         case .toggleFavorite(let book):
-            // Actor handles concurrency automatically
             Task {
                 await toggleFavorite(book)
             }
@@ -90,7 +86,6 @@ final class FavoriteListStore: Store {
             applyFiltersAndSort()
             
         case .updatePriceFilter(let filter):
-            // 동적 범위를 유지하며 필터 업데이트
             var updatedFilter = filter
             let currentRange = state.dynamicPriceRange
             updatedFilter.updateDynamicRange(min: currentRange.min, max: currentRange.max)
@@ -117,10 +112,8 @@ extension FavoriteListStore {
     
     private func loadInitialData() async {
         do {
-            // 1. 즐겨찾기 상태 로드
             try await favoriteService.loadFavoriteStatus()
             
-            // 2. 즐겨찾기 책들 로드 (DB에서 실제 데이터)
             await loadFavoriteBooksFromDatabase()
             
         } catch {
@@ -138,7 +131,6 @@ extension FavoriteListStore {
             await MainActor.run {
                 state.allBooks = books
                 
-                // 동적 가격 범위 계산 및 업데이트
                 let priceRange = state.dynamicPriceRange
                 state.priceFilter.updateDynamicRange(min: priceRange.min, max: priceRange.max)
                 
@@ -155,14 +147,12 @@ extension FavoriteListStore {
     }
     
     private func refreshFromDatabase() async {
-        // 새로고침 시에만 DB에서 최신 데이터 가져와서 UI 업데이트
         do {
             let books = try await repository.getAllFavoriteBooks()
             
             await MainActor.run {
                 state.allBooks = books
                 
-                // 동적 가격 범위 업데이트
                 let priceRange = state.dynamicPriceRange
                 state.priceFilter.updateDynamicRange(min: priceRange.min, max: priceRange.max)
                 
@@ -179,7 +169,6 @@ extension FavoriteListStore {
     private func applyFiltersAndSort() {
         var filteredBooks = state.allBooks
         
-        // 검색 필터링 (초성 포함)
         if !state.query.isEmpty {
             filteredBooks = filteredBooks.filter { book in
                 book.title.matchesKoreanSearch(state.query) ||
@@ -188,12 +177,10 @@ extension FavoriteListStore {
             }
         }
         
-        // 가격 필터링
         if state.priceFilter.isEnabled {
             filteredBooks = state.priceFilter.apply(to: filteredBooks)
         }
         
-        // 정렬
         switch state.sortType {
         case .ascending:
             filteredBooks = filteredBooks.sorted {
@@ -215,7 +202,6 @@ extension FavoriteListStore {
             await MainActor.run {
                 if isFavorite {
                     toast.showAddFavorite()
-                    // 새로 추가된 경우에만 즉시 UI에 추가
                     if !state.allBooks.contains(where: { $0.id == book.id }) {
                         state.allBooks.append(book)
                         applyFiltersAndSort()

@@ -19,14 +19,12 @@ struct PriceFilterBottomSheetView: View {
         self.onFilterSelected = onFilterSelected
     }
     
-    // 동적 프리셋 가격 범위들
     private var dynamicPresets: [(title: String, min: Int, max: Int)] {
         return currentFilter.generateDynamicPresets()
     }
     
     var body: some View {
         VStack(spacing: .zero) {
-            // 상단 핸들
             RoundedRectangle(cornerRadius: 2.5)
                 .fill(Color.gray.opacity(0.3))
                 .frame(width: 36, height: 5)
@@ -34,7 +32,6 @@ struct PriceFilterBottomSheetView: View {
                 .padding(.bottom, 24)
             
             VStack(alignment: .leading, spacing: 24) {
-                // 헤더
                 HStack {
                     Text("가격 필터")
                         .font(.system(size: 20, weight: .semibold))
@@ -51,14 +48,12 @@ struct PriceFilterBottomSheetView: View {
                 }
                 .padding(.horizontal, 20)
                 
-                // 가격 범위 표시
                 VStack(alignment: .leading, spacing: 16) {
                     Text("\(currentFilter.minPrice.formatted())원 ~ \(currentFilter.maxPrice.formatted())원")
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.primary)
                         .padding(.horizontal, 20)
                     
-                    // 커스텀 슬라이더
                     VStack(spacing: 20) {
                         HStack {
                             Text("\(currentFilter.dynamicMinPrice.formatted()) 원")
@@ -89,7 +84,6 @@ struct PriceFilterBottomSheetView: View {
                     }
                     
                     
-                    // 프리셋 버튼들
                     VStack(spacing: 16) {
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
                             ForEach(dynamicPresets, id: \.title) { preset in
@@ -114,7 +108,6 @@ struct PriceFilterBottomSheetView: View {
                         .padding(.horizontal, 20)
                     }
                     
-                    // 적용 버튼
                     VStack(spacing: 16) {
                         Button(action: {
                             currentFilter.isEnabled = true

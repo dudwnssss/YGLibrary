@@ -15,13 +15,10 @@ struct BookDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                // 메인 책 정보 섹션
                 bookHeaderSection
                 
-                // 상세 정보 섹션
                 bookDetailsSection
                 
-                // 책 소개 섹션
                 if store.book.hasContents {
                     bookDescriptionSection
                 }
@@ -57,9 +54,7 @@ struct BookDetailView: View {
             store.dispatch(.onAppear)
         }
     }
-    
-    // MARK: - Subviews
-    
+        
     private var bookHeaderSection: some View {
         HStack(alignment: .top, spacing: 16) {
             // 책 이미지
@@ -79,16 +74,13 @@ struct BookDetailView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
             
-            // 책 정보
             VStack(alignment: .leading, spacing: 12) {
-                // 제목
                 Text(store.state.book.title)
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.primary)
                     .lineLimit(3)
                     .multilineTextAlignment(.leading)
                 
-                // 저자
                 VStack(alignment: .leading, spacing: 4) {
                     Text("저자")
                         .font(.system(size: 12, weight: .medium))
@@ -98,7 +90,6 @@ struct BookDetailView: View {
                         .foregroundColor(.primary)
                 }
                 
-                // 출판사
                 VStack(alignment: .leading, spacing: 4) {
                     Text("출판사")
                         .font(.system(size: 12, weight: .medium))
@@ -108,7 +99,6 @@ struct BookDetailView: View {
                         .foregroundColor(.primary)
                 }
                 
-                // 출간일
                 if let dateTime = store.state.book.dateTime {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("출간일")
@@ -129,7 +119,6 @@ struct BookDetailView: View {
     
     private var bookDetailsSection: some View {
         VStack(spacing: 16) {
-            // 섹션 제목
             HStack {
                 Text("상세 정보")
                     .font(.system(size: 18, weight: .semibold))
@@ -137,7 +126,6 @@ struct BookDetailView: View {
                 Spacer()
             }
             
-            // 정보 카드
             VStack(spacing: .zero) {
                 DetailRowView(label: "ISBN", value: store.state.book.isbn)
                 
@@ -172,7 +160,6 @@ struct BookDetailView: View {
     
     private var bookDescriptionSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // 섹션 제목
             HStack {
                 Text("책 소개")
                     .font(.system(size: 18, weight: .semibold))
@@ -180,7 +167,6 @@ struct BookDetailView: View {
                 Spacer()
             }
             
-            // 내용
             Text(store.state.book.contents)
                 .font(.system(size: 15))
                 .foregroundColor(.primary)

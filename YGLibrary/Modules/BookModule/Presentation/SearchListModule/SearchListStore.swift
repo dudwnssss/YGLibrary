@@ -34,8 +34,8 @@ final class SearchListStore: Store {
         var favoriteUniqueIds: Set<String> = []
         
         private var seenUniqueIds: Set<String> = []
-        private var isLoadingNextPage: Bool = false // 중복 로딩 방지
-        private var lastTriggeredUniqueId: String = "" // 무한스크롤 중복 방지
+        private var isLoadingNextPage: Bool = false
+        private var lastTriggeredUniqueId: String = ""
         
         var hasNextPage: Bool {
             guard let meta else { return false }
@@ -68,7 +68,7 @@ final class SearchListStore: Store {
         mutating func resetBooks(_ newBooks: [Book]) {
             seenUniqueIds.removeAll()
             books.removeAll()
-            lastTriggeredUniqueId = "" // 무한스크롤 상태 초기화
+            lastTriggeredUniqueId = ""
             
             for book in newBooks {
                 if !seenUniqueIds.contains(book.id) {
@@ -151,16 +151,9 @@ final class SearchListStore: Store {
             }
             
         case .loadNextPage:
-            // 🎯 중복 로딩 방지 최적화
-            print("📱 LoadNextPage called - canLoadMore: \(state.canLoadMore), currentTask: \(currentLoadMoreTask != nil)")
-            
             guard state.canLoadMore, currentLoadMoreTask == nil else { 
-                print("⏹️ LoadNextPage blocked - canLoadMore: \(state.canLoadMore), hasTask: \(currentLoadMoreTask != nil)")
-                return 
+                return
             }
-            
-            print("🚀 Starting loadNextPage - page: \(state.currentPage + 1)")
-            
             state.setLoadingNextPage(true)
             state.currentPage += 1
             
@@ -178,9 +171,7 @@ final class SearchListStore: Store {
             }
             
         case .bookAppeared(let book):
-            // 무한스크롤 로직을 Store에서 처리
             if state.checkInfiniteScrollTrigger(for: book) {
-                print("🚀 Infinite scroll triggered at book: \(book.title), UniqueId: \(book.id)")
                 dispatch(.loadNextPage)
             }
         }
@@ -202,8 +193,6 @@ extension SearchListStore {
     }
     
     private func loadData(isLoadingMore: Bool) async {
-        print("🌐 LoadData started - isLoadingMore: \(isLoadingMore), page: \(state.currentPage), query: '\(state.query)'")
-        
         guard !state.query.isEmpty else {
             await MainActor.run {
                 state.resetBooks([])
@@ -216,7 +205,6 @@ extension SearchListStore {
             state.isError = false
             if isLoadingMore {
                 state.isLoadingMore = true
-                print("🔄 Set isLoadingMore = true")
             }
         }
         
@@ -228,12 +216,10 @@ extension SearchListStore {
             )
             
             guard !Task.isCancelled else { 
-                print("❌ Task cancelled")
-                return 
+                return
             }
             
             let newBooks = response.documents.map { Book(from: $0) }
-            print("📚 Received \(newBooks.count) books, meta.isEnd: \(response.meta.isEnd)")
             
             await MainActor.run {
                 state.meta = response.meta
@@ -242,24 +228,19 @@ extension SearchListStore {
                     let beforeCount = state.books.count
                     state.addBooksIncremental(newBooks)
                     let afterCount = state.books.count
-                    print("➕ Books added: \(beforeCount) -> \(afterCount) (+\(afterCount - beforeCount))")
                 } else {
                     state.resetBooks(newBooks)
-                    print("🆕 Books reset: \(newBooks.count) books")
                 }
             }
             
         } catch {
             guard !Task.isCancelled else { return }
-            
-            print("❌ LoadData error: \(error)")
-            
+                        
             await MainActor.run {
                 state.isError = true
                 
                 if isLoadingMore {
                     state.currentPage -= 1
-                    print("⬅️ Page rolled back to: \(state.currentPage)")
                 }
                 
                 if let networkError = error as? NetworkError {
@@ -276,7 +257,6 @@ extension SearchListStore {
         await MainActor.run {
             state.isLoading = false
             state.isLoadingMore = false
-            print("✅ LoadData completed - isLoading: false, isLoadingMore: false")
         }
     }
     
@@ -294,7 +274,6 @@ extension SearchListStore {
          } catch {
              await MainActor.run {
                  state.isError = true
-                 print("즐겨찾기 처리 중 오류가 발생했습니다: \(error)")
              }
          }
     }

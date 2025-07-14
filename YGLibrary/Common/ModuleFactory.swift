@@ -44,7 +44,7 @@ struct ModuleFactoryImpl: ModuleFactory {
             let vc = UIHostingController(rootView: view)
             if let sheet = vc.sheetPresentationController {
                 sheet.detents = [.custom { _ in
-                    240 // 🔧 핸들 + 헤더 + 2개 옵션 + 여백
+                    240
                 }]
                 sheet.preferredCornerRadius = 16
                 sheet.prefersGrabberVisible = false
@@ -60,7 +60,7 @@ struct ModuleFactoryImpl: ModuleFactory {
             let vc = UIHostingController(rootView: view)
             if let sheet = vc.sheetPresentationController {
                 sheet.detents = [.custom { _ in
-                    240 // 🔧 핸들 + 헤더 + 2개 옵션 + 여백
+                    240 
                 }]
                 sheet.preferredCornerRadius = 16
                 sheet.prefersGrabberVisible = false

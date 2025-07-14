@@ -21,10 +21,8 @@ struct FavoriteSearchBottomSheetView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: .zero) {
-                // 검색바
                 searchBarSection
                 
-                // 컨텐츠 영역
                 if store.state.isLoading {
                     loadingView
                 } else if store.state.query.isEmpty {
@@ -65,9 +63,7 @@ struct FavoriteSearchBottomSheetView: View {
             }
         }
     }
-    
-    // MARK: - Subviews
-    
+        
     private var searchBarSection: some View {
         VStack(spacing: .zero) {
             HStack(spacing: 12) {

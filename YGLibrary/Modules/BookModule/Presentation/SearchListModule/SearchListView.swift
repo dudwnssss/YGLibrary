@@ -19,23 +19,18 @@ struct SearchListView: View {
             
             Group {
                 if !networkMonitor.isConnected {
-                    //네트워크 에러
                     networkErrorView
                     
                 } else if store.isError {
-                    // 서버통신 에러
                     errorView
                     
                 }else if store.isLoading && store.state.books.isEmpty {
-                    // 초기 로딩
                     loadingView
                     
                 } else if store.state.books.isEmpty && !store.query.isEmpty {
-                    // 검색 결과 없음
                     emptySearchView
                     
                 } else if store.state.books.isEmpty {
-                    // 초기 상태
                     initialView
                     
                 } else {
@@ -57,7 +52,6 @@ struct SearchListView: View {
             List {
                 SearchSortView(store: store)
                 
-                // 책 목록
                 ForEach(store.state.books, id: \.id) { book in
                     BookRowView(
                         book: book,
@@ -77,7 +71,6 @@ struct SearchListView: View {
                     }
                 }
                 
-                // 하단 로딩 인디케이터
                 if store.isLoadingMore {
                     HStack {
                         Spacer()

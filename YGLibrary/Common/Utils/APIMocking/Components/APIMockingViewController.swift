@@ -135,7 +135,6 @@ final class APIMockingViewController: UIViewController {
     private func disableAllMocks() {
         APIMockingManager.shared.disableAllMocks()
         
-        // UI 업데이트 최적화
         DispatchQueue.main.async {
             self.loadRecords()
             self.tableView.reloadData()

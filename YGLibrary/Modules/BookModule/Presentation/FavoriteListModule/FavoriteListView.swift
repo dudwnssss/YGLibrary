@@ -19,15 +19,12 @@ struct FavoriteListView: View {
                     loadingView
                     
                 } else if store.allBooks.isEmpty {
-                    // 즐겨찾기가 없음
                     emptyFavoritesView
                     
                 } else if store.books.isEmpty && !store.query.isEmpty {
-                    // 검색 결과 없음
                     emptyFilterView
                     
                 } else {
-                    // 즐겨찾기 리스트
                     contentView
                 }
             }

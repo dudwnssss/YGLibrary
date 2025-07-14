@@ -128,14 +128,14 @@ struct YGToolbarModifier: ViewModifier {
 
 extension View {
     func ygToolbar(
-        height: CGFloat = 44, // 🔧 시스템 네비게이션바와 같은 높이로 변경
+        height: CGFloat = 44,
         @YGToolbarContentBuilder content: () -> [YGToolbarItem]
     ) -> some View {
         modifier(YGToolbarModifier(height: height, items: content()))
     }
     
     func ygToolbar(
-        height: CGFloat = 44, // 🔧 시스템 네비게이션바와 같은 높이로 변경
+        height: CGFloat = 44, 
         @YGToolbarContentBuilder content: () -> YGToolbarItem
     ) -> some View {
         modifier(YGToolbarModifier(height: height, items: [content()]))

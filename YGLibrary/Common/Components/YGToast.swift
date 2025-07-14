@@ -71,12 +71,10 @@ final class ToastManager {
     private var currentToastView: YGToastView?
     
     func show(_ config: ToastConfig) {
-        // 기존거 즉시 제거
         self.currentContainer?.removeFromSuperview()
         
         guard let vc = self.topViewController() else { return }
             
-        // 새로 만들기
         let container = UIView()
         let toastView = YGToastView(config: config)
         let host = UIHostingController(rootView: toastView)
@@ -105,9 +103,9 @@ final class ToastManager {
             host.view.trailingAnchor.constraint(equalTo: container.trailingAnchor)
         ])
         
-        let maxWidth = vc.view.frame.width - 32 // 좌우 여백 16씩
+        let maxWidth = vc.view.frame.width - 32
         let tempSize = host.sizeThatFits(in: CGSize(width: maxWidth, height: UIView.layoutFittingExpandedSize.height))
-        let dynamicHeight = max(60, min(100, tempSize.height)) // 최소 60, 최대 100
+        let dynamicHeight = max(60, min(100, tempSize.height))
         
         let heightConstraint = container.heightAnchor.constraint(equalToConstant: dynamicHeight)
         heightConstraint.isActive = true
@@ -115,7 +113,6 @@ final class ToastManager {
         self.currentContainer = container
         self.currentToastView = toastView
         
-        // 자동 사라짐 (접히면서)
         Task {
             try? await Task.sleep(nanoseconds: UInt64(config.duration * 1_000_000_000))
             
