@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct RangeSlider: View {
+struct YGRangeSlider: View {
     let minValue: Double
     let maxValue: Double
     @Binding var lowerValue: Double

@@ -13,6 +13,7 @@ import Dependencies
 final class FavoriteListStore: Store {
     enum Action {
         case onAppear
+        case refresh
         case navigateToDetail(Book)
         case toggleFavorite(Book)
         case search(String)
@@ -23,7 +24,7 @@ final class FavoriteListStore: Store {
     
     struct State {
         var allBooks: [Book] = []           // 전체 즐겨찾기 책들
-        var books: [Book] = []              // 검색/정렬 결과
+        var books: [Book] = []              // 필터링/정렬된 결과
         var isLoading: Bool = false
         var isError: Bool = false
         var favoriteISBNs: Set<String> = []
@@ -45,65 +46,121 @@ final class FavoriteListStore: Store {
     private var cancellables = Set<AnyCancellable>()
     
     init() {
-        print("🏪 FavoriteListStore 초기화")
         setSubscription()
     }
     
     private func setSubscription() {
-        print("🔗 setSubscription 시작")
-        
+        // 즐겨찾기 상태만 업데이트, UI는 그대로 유지
         favoriteService.favoriteISBNs
             .receive(on: DispatchQueue.main)
             .sink { [weak self] isbns in
-                print("📥 favoriteService.favoriteISBNs 업데이트:")
-                print("   - 받은 isbns 개수: \(isbns.count)")
-                print("   - 받은 isbns 내용: \(isbns)")
-                
                 self?.state.favoriteISBNs = isbns
-                print("   - state.favoriteISBNs 업데이트됨: \(self?.state.favoriteISBNs ?? [])")
-                
-                // 즐겨찾기 해제 시에는 즉시 UI 업데이트하지 않음
-                // loadFavoriteBooks()는 다른 액션에서만 호출
+                // 🎯 즉시 제거하지 않음 - UI는 그대로 유지
             }
             .store(in: &cancellables)
-        
-        print("✅ setSubscription 완료")
     }
     
-    private func loadFavoriteBooks() async {
-        print("📚 loadFavoriteBooks 시작")
-        
-        do {
-            // 새로고침 시에는 기존 데이터를 유지하면서 로딩
-            // state.isLoading = true 제거
-            
-            let books = try await repository.getAllFavoriteBooks()
-            
-            print("📖 repository에서 가져온 책들:")
-            print("   - 개수: \(books.count)")
-            books.forEach { print("   - \($0.title) (ISBN: \($0.isbn))") }
-            
-            await MainActor.run {
-                state.allBooks = books
-                filterAndSortBooks()
-                // state.isLoading = false 제거
-                
-                print("📋 최종 상태:")
-                print("   - state.allBooks 개수: \(state.allBooks.count)")
-                print("   - state.books 개수: \(state.books.count)")
-                print("   - state.favoriteISBNs 개수: \(state.favoriteISBNs.count)")
+    func dispatch(_ action: Action) {
+        switch action {
+        case .onAppear:
+            // 최초 로딩시에만 로딩 상태 표시
+            if state.allBooks.isEmpty {
+                state.isLoading = true
             }
+            
+            Task {
+                await loadInitialData()
+            }
+            
+        case .refresh:
+            // 🎯 새로고침 시에만 실제 즐겨찾기 상태 반영
+            Task {
+                await refreshFromDatabase()
+            }
+            
+        case .navigateToDetail(let book):
+            router.navigate(to: .bookDetail(book), type: .push)
+            
+        case .toggleFavorite(let book):
+            Task {
+                await toggleFavorite(book)
+            }
+            
+        case .search(let query):
+            state.query = query
+            applyFiltersAndSort()
+            
+        case .sort(let sortType):
+            state.sortType = sortType
+            applyFiltersAndSort()
+            
+        case .updatePriceFilter(let filter):
+            state.priceFilter = filter
+            applyFiltersAndSort()
+            
+        case .openSearchModal:
+            router.navigate(to: .favoriteSearchModal { [weak self] query in
+                self?.dispatch(.search(query))
+            }, type: .present())
+        }
+    }
+}
+
+// MARK: - Private Methods
+extension FavoriteListStore {
+    
+    private func loadInitialData() async {
+        do {
+            // 1. 즐겨찾기 상태 로드
+            try await favoriteService.loadFavoriteStatus()
+            
+            // 2. 즐겨찾기 책들 로드 (DB에서 실제 데이터)
+            await loadFavoriteBooksFromDatabase()
+            
         } catch {
-            print("❌ loadFavoriteBooks 실패: \(error)")
             await MainActor.run {
                 state.isError = true
-                // state.isLoading = false 제거
+                state.isLoading = false
             }
         }
     }
     
-    // MARK: - 검색 및 정렬 로직
-    private func filterAndSortBooks() {
+    private func loadFavoriteBooksFromDatabase() async {
+        do {
+            let books = try await repository.getAllFavoriteBooks()
+            
+            await MainActor.run {
+                state.allBooks = books
+                applyFiltersAndSort()
+                state.isLoading = false
+                state.isError = false
+            }
+        } catch {
+            await MainActor.run {
+                state.isError = true
+                state.isLoading = false
+            }
+        }
+    }
+    
+    private func refreshFromDatabase() async {
+        // 새로고침 시에만 DB에서 최신 데이터 가져와서 UI 업데이트
+        do {
+            let books = try await repository.getAllFavoriteBooks()
+            
+            await MainActor.run {
+                state.allBooks = books
+                applyFiltersAndSort()
+                state.isError = false
+            }
+        } catch {
+            await MainActor.run {
+                state.isError = true
+            }
+        }
+    }
+    
+    private func applyFiltersAndSort() {
         var filteredBooks = state.allBooks
         
         // 검색 필터링 (초성 포함)
@@ -114,6 +171,7 @@ final class FavoriteListStore: Store {
                 book.publisher.matchesKoreanSearch(state.query)
             }
         }
+        
         // 가격 필터링
         if state.priceFilter.isEnabled {
             filteredBooks = filteredBooks.filter { book in
@@ -137,78 +195,28 @@ final class FavoriteListStore: Store {
         state.books = filteredBooks
     }
     
-    func dispatch(_ action: Action) {
-        switch action {
-        case .onAppear:
-            print("👁️ FavoriteListView onAppear")
+    private func toggleFavorite(_ book: Book) async {
+        do {
+            let isFavorite = try await favoriteService.toggleFavorite(book)
             
-            // 최초 로딩시에만 로딩 상태 표시
-            if state.allBooks.isEmpty {
-                state.isLoading = true
-            }
-            
-            Task {
-                try await favoriteService.loadFavoriteStatus()
-                await loadFavoriteBooks()
-                
-                // 로딩 완료
-                await MainActor.run {
-                    state.isLoading = false
+            await MainActor.run {
+                if isFavorite {
+                    toastService.showAddFavorite()
+                    // 새로 추가된 경우에만 즉시 UI에 추가
+                    if !state.allBooks.contains(where: { $0.isbn == book.isbn }) {
+                        state.allBooks.append(book)
+                        applyFiltersAndSort()
+                    }
+                } else {
+                    toastService.showRemoveFavorite()
+                    // 🎯 제거의 경우 UI에서 즉시 제거하지 않음
+                    // 사용자가 새로고침할 때까지 화면에 남아있음
                 }
             }
-            
-        case .navigateToDetail(let book):
-            router.navigate(to: .bookDetail(book), type: .push)
-            
-        case .toggleFavorite(let book):
-            Task {
-                do {
-                    let isFavorite = try await favoriteService.toggleFavorite(book)
-                    
-                    await MainActor.run {
-                        if isFavorite {
-                            toastService.showAddFavorite()
-                        } else {
-                            toastService.showRemoveFavorite()
-                        }
-                    }
-                 } catch {
-                     await MainActor.run {
-                         state.isError = true
-                         print("즐겨찾기 처리 중 오류가 발생했습니다: \(error)")
-                     }
-                 }
+        } catch {
+            await MainActor.run {
+                state.isError = true
             }
-            
-        case .search(let query):
-            print("🔍 검색어 변경: '\(query)'")
-            state.query = query
-            // 검색 시 즐겨찾기 목록 새로 불러오기
-            Task {
-                await loadFavoriteBooks()
-            }
-            
-        case .sort(let sortType):
-            print("🔄 정렬 변경: \(sortType.displayText)")
-            state.sortType = sortType
-            // 정렬 시 즐겨찾기 목록 새로 불러오기
-            Task {
-                await loadFavoriteBooks()
-            }
-            
-        case .updatePriceFilter(let filter):
-            print("💰 가격 필터 변경: \(filter.displayText)")
-            state.priceFilter = filter
-            // 필터 시 즐겨찾기 목록 새로 불러오기
-            Task {
-                await loadFavoriteBooks()
-            }
-            
-        case .openSearchModal:
-            print("🔍 검색 모달 열기")
-            router.navigate(to: .favoriteSearchModal { [weak self] query in
-                self?.dispatch(.search(query))
-            }, type: .present())
         }
     }
 }

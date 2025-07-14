@@ -326,7 +326,7 @@ struct PriceFilterBottomSheetView: View {
                         }
                         .padding(.horizontal, 20)
                         
-                        RangeSlider(
+                        YGRangeSlider(
                             minValue: Double(PriceFilter.defaultMinPrice),
                             maxValue: Double(PriceFilter.defaultMaxPrice),
                             lowerValue: Binding(

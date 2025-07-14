@@ -64,7 +64,7 @@ struct FavoriteListView: View {
                 }
             }
         }
-        .background(Color(UIColor.systemGroupedBackground))
+        .background(Color(uiColor: .systemGray6))
         .onAppear {
             store.dispatch(.onAppear)
         }
