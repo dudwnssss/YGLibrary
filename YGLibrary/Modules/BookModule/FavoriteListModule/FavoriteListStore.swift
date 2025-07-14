@@ -41,7 +41,7 @@ final class FavoriteListStore: Store {
     @Dependency(\.router) private var router
     @Dependency(\.favoriteService) private var favoriteService
     @Dependency(\.bookRepository) private var repository
-    @Dependency(\.toast) private var toastService
+    @Dependency(\.toast) private var toast
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -71,6 +71,7 @@ final class FavoriteListStore: Store {
             router.navigate(to: .bookDetail(book), type: .push)
             
         case .toggleFavorite(let book):
+            // Actor handles concurrency automatically
             Task {
                 await toggleFavorite(book)
             }
@@ -197,14 +198,14 @@ extension FavoriteListStore {
             
             await MainActor.run {
                 if isFavorite {
-                    toastService.showAddFavorite()
+                    toast.showAddFavorite()
                     // 새로 추가된 경우에만 즉시 UI에 추가
                     if !state.allBooks.contains(where: { $0.isbn == book.isbn }) {
                         state.allBooks.append(book)
                         applyFiltersAndSort()
                     }
                 } else {
-                    toastService.showRemoveFavorite()
+                    toast.showRemoveFavorite()
                 }
             }
         } catch {

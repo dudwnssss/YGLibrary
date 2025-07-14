@@ -8,6 +8,8 @@
 import UIKit
 import SwiftUI
 
+import Dependencies
+
 enum Tab {
     case search
     case favorite
@@ -16,6 +18,7 @@ enum Tab {
 final class MainTabBarController: UITabBarController {
     override func viewDidLoad() {
         super.viewDidLoad()
+        delegate = self
         setupTabs()
         configure()
     }
@@ -51,3 +54,38 @@ final class MainTabBarController: UITabBarController {
     }
 }
 
+extension MainTabBarController: UITabBarControllerDelegate {
+    func tabBarController(_ tabBarController: UITabBarController, didSelect viewController: UIViewController) {
+        @Dependency(\.haptic) var haptic
+        haptic.generateFeedback(.light)
+    }
+    
+    func tabBarController(_ tabBarController: UITabBarController, shouldSelect viewController: UIViewController) -> Bool {
+        if viewController == selectedViewController {
+            scrollToTop(in: viewController)
+        }
+        
+        return true
+    }
+        
+    private func scrollToTop(in viewController: UIViewController) {
+        var targetViewController: UIViewController = viewController
+        
+        if let navController = viewController as? UINavigationController,
+           let topVC = navController.topViewController {
+            targetViewController = topVC
+        }
+        findAndScrollToTop(in: targetViewController.view)
+    }
+    
+    private func findAndScrollToTop(in view: UIView) {
+        for subview in view.subviews {
+            if let scrollView = subview as? UIScrollView {
+                scrollView.setContentOffset(.zero, animated: true)
+                return
+            } else {
+                findAndScrollToTop(in: subview)
+            }
+        }
+    }
+}

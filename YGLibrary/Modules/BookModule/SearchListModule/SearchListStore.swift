@@ -19,11 +19,11 @@ final class SearchListStore: Store {
         case search(String)
         case loadNextPage
         case toggleFavorite(Book)
+        case bookAppeared(Book) // 새로운 액션 추가
     }
     
     struct State {
-        var allBooks: [Book] = []          // 중복 제거 전 원본 데이터
-        var books: [Book] = []             // 화면에 표시될 최종 데이터 (중복 제거 + 정렬 적용)
+        var books: [Book] = []             // 최종 표시될 책 목록 (중복 제거됨)
         var meta: MetaResponse<BookDTO>.Meta?
         var sortType: SearchSortType = .accuracy
         var isLoading: Bool = false
@@ -33,17 +33,70 @@ final class SearchListStore: Store {
         var currentPage: Int = 1
         var favoriteISBNs: Set<String> = []
         
+        // 내부 상태 (UI에 영향 주지 않음)
+        private var seenISBNs: Set<String> = []
+        private var isLoadingNextPage: Bool = false // 중복 로딩 방지
+        private var lastTriggeredISBN: String = "" // 무한스크롤 중복 방지
+        
         var hasNextPage: Bool {
             guard let meta else { return false }
             return !meta.isEnd
         }
         
         var canLoadMore: Bool {
-            return hasNextPage && !isLoading && !isLoadingMore
+            return hasNextPage && !isLoading && !isLoadingMore && !isLoadingNextPage
         }
         
         func isFavorite(_ book: Book) -> Bool {
             return favoriteISBNs.contains(book.isbn)
+        }
+        
+        // 성능 최적화: 증분 업데이트
+        mutating func addBooksIncremental(_ newBooks: [Book]) {
+            var addedBooks: [Book] = []
+            
+            for book in newBooks {
+                if !seenISBNs.contains(book.isbn) {
+                    seenISBNs.insert(book.isbn)
+                    addedBooks.append(book)
+                }
+            }
+            
+            if !addedBooks.isEmpty {
+                books.append(contentsOf: addedBooks)
+            }
+        }
+        
+        mutating func resetBooks(_ newBooks: [Book]) {
+            seenISBNs.removeAll()
+            books.removeAll()
+            lastTriggeredISBN = "" // 무한스크롤 상태 초기화
+            
+            for book in newBooks {
+                if !seenISBNs.contains(book.isbn) {
+                    seenISBNs.insert(book.isbn)
+                    books.append(book)
+                }
+            }
+        }
+        
+        mutating func setLoadingNextPage(_ loading: Bool) {
+            isLoadingNextPage = loading
+        }
+        
+        // 무한스크롤 트리거 로직
+        mutating func checkInfiniteScrollTrigger(for book: Book) -> Bool {
+            let booksCount = books.count
+            
+            guard let bookIndex = books.firstIndex(where: { $0.isbn == book.isbn }),
+                  bookIndex >= max(0, booksCount - 3),
+                  book.isbn != lastTriggeredISBN,
+                  canLoadMore else {
+                return false
+            }
+            
+            lastTriggeredISBN = book.isbn
+            return true
         }
     }
     
@@ -54,6 +107,7 @@ final class SearchListStore: Store {
     @Dependency(\.favoriteService) private var favoriteService
     @Dependency(\.toast) private var toast
     
+    // MARK: - Task Management
     private var currentSearchTask: Task<Void, Never>?
     private var currentLoadMoreTask: Task<Void, Never>?
     private var cancellables = Set<AnyCancellable>()
@@ -97,32 +151,47 @@ final class SearchListStore: Store {
         case .search(let query):
             state.query = query
             
-            // 검색어가 있을 때만 로딩 상태 처리
             if !query.isEmpty {
-                // 기존 데이터가 있으면 오버레이 로딩, 없으면 전체 화면 로딩
                 state.isLoading = true
                 resetAndSearch()
             } else {
-                // 검색어가 비어있으면 결과 초기화
-                state.allBooks = []
-                state.books = []
+                state.resetBooks([])
                 state.meta = nil
                 state.isLoading = false
             }
             
         case .loadNextPage:
-            // 이미 로딩 중이거나 더 이상 데이터가 없으면 중단
-            guard state.canLoadMore, currentLoadMoreTask == nil else { return }
+            // 🎯 중복 로딩 방지 최적화
+            print("📱 LoadNextPage called - canLoadMore: \(state.canLoadMore), currentTask: \(currentLoadMoreTask != nil)")
             
+            guard state.canLoadMore, currentLoadMoreTask == nil else { 
+                print("⏹️ LoadNextPage blocked - canLoadMore: \(state.canLoadMore), hasTask: \(currentLoadMoreTask != nil)")
+                return 
+            }
+            
+            print("🚀 Starting loadNextPage - page: \(state.currentPage + 1)")
+            
+            state.setLoadingNextPage(true)
             state.currentPage += 1
+            
             currentLoadMoreTask = Task { 
                 await loadData(isLoadingMore: true)
+                await MainActor.run {
+                    state.setLoadingNextPage(false)
+                }
                 currentLoadMoreTask = nil
             }
         
         case .toggleFavorite(let book):
             Task {
                 await toggleFavorite(book)
+            }
+            
+        case .bookAppeared(let book):
+            // 무한스크롤 로직을 Store에서 처리
+            if state.checkInfiniteScrollTrigger(for: book) {
+                print("🚀 Infinite scroll triggered at book: \(book.title), ISBN: \(book.isbn)")
+                dispatch(.loadNextPage)
             }
         }
     }
@@ -131,12 +200,10 @@ final class SearchListStore: Store {
 extension SearchListStore {
     private func resetAndSearch() {
         currentSearchTask?.cancel()
-        currentLoadMoreTask?.cancel() // 로드더 태스크도 취소
+        currentLoadMoreTask?.cancel()
         currentLoadMoreTask = nil
         
         state.currentPage = 1
-        state.allBooks = []
-        // 기존 books는 유지해서 UI 깜뿍임 방지 (새로운 데이터 로드 시 업데이트)
         state.meta = nil
         
         currentSearchTask = Task {
@@ -145,19 +212,23 @@ extension SearchListStore {
     }
     
     private func loadData(isLoadingMore: Bool) async {
+        print("🌐 LoadData started - isLoadingMore: \(isLoadingMore), page: \(state.currentPage), query: '\(state.query)'")
+        
         guard !state.query.isEmpty else {
-            state.allBooks = []
-            state.books = []
-            state.meta = nil
+            await MainActor.run {
+                state.resetBooks([])
+                state.meta = nil
+            }
             return
         }
         
-        state.isError = false
-        
-        if isLoadingMore {
-            state.isLoadingMore = true
+        await MainActor.run {
+            state.isError = false
+            if isLoadingMore {
+                state.isLoadingMore = true
+                print("🔄 Set isLoadingMore = true")
+            }
         }
-        // 이미 search 액션에서 isLoading을 설정했으므로 여기서는 설정하지 않음
         
         do {
             let response = try await service.getSearchBook(
@@ -166,57 +237,59 @@ extension SearchListStore {
                 page: state.currentPage
             )
             
-            guard !Task.isCancelled else { return }
-            
-            state.meta = response.meta
-            
-            if isLoadingMore {
-                let newBooks = response.documents.map { Book(from: $0) }
-                state.allBooks.append(contentsOf: newBooks)
-            } else {
-                state.allBooks = response.documents.map { Book(from: $0) }
+            guard !Task.isCancelled else { 
+                print("❌ Task cancelled")
+                return 
             }
             
-            // 중복 제거 및 정렬 적용
-            applyUniqueAndSort()
+            let newBooks = response.documents.map { Book(from: $0) }
+            print("📚 Received \(newBooks.count) books, meta.isEnd: \(response.meta.isEnd)")
             
-            await loadFavoriteStatus()
+            await MainActor.run {
+                state.meta = response.meta
+                
+                if isLoadingMore {
+                    // 🚀 성능 최적화: 증분 업데이트로 깜빡임 방지
+                    let beforeCount = state.books.count
+                    state.addBooksIncremental(newBooks)
+                    let afterCount = state.books.count
+                    print("➕ Books added: \(beforeCount) -> \(afterCount) (+\(afterCount - beforeCount))")
+                } else {
+                    // 🔄 새 검색: 전체 초기화
+                    state.resetBooks(newBooks)
+                    print("🆕 Books reset: \(newBooks.count) books")
+                }
+            }
             
         } catch {
             guard !Task.isCancelled else { return }
-            state.isError = true
             
-            if isLoadingMore {
-                state.currentPage -= 1
-            }
+            print("❌ LoadData error: \(error)")
             
-            if let networkError = error as? NetworkError {
-                switch networkError {
-                case .networkUnavailable, .timeout, .connectionLost:
-                    toast.show(.init(message: error.localizedDescription, icon: "info.circle"))
-                default:
-                    break
+            await MainActor.run {
+                state.isError = true
+                
+                if isLoadingMore {
+                    state.currentPage -= 1
+                    print("⬅️ Page rolled back to: \(state.currentPage)")
+                }
+                
+                if let networkError = error as? NetworkError {
+                    switch networkError {
+                    case .networkUnavailable, .timeout, .connectionLost:
+                        toast.show(.init(message: error.localizedDescription, icon: "info.circle"))
+                    default:
+                        break
+                    }
                 }
             }
         }
         
-        state.isLoading = false
-        state.isLoadingMore = false
-    }
-    
-    // 🎯 중복 제거 및 정렬 적용
-    private func applyUniqueAndSort() {
-        var seenISBNs: Set<String> = []
-        let uniqueBooks = state.allBooks.filter { book in
-            if seenISBNs.contains(book.isbn) {
-                return false
-            } else {
-                seenISBNs.insert(book.isbn)
-                return true
-            }
+        await MainActor.run {
+            state.isLoading = false
+            state.isLoadingMore = false
+            print("✅ LoadData completed - isLoading: false, isLoadingMore: false")
         }
-        
-        state.books = uniqueBooks
     }
     
     private func toggleFavorite(_ book: Book) async {
@@ -236,14 +309,5 @@ extension SearchListStore {
                  print("즐겨찾기 처리 중 오류가 발생했습니다: \(error)")
              }
          }
-    }
-    
-    private func loadFavoriteStatus() async {
-        do {
-            let favoriteISBNs = try await repository.getAllFavoriteISBNs()
-            state.favoriteISBNs  = favoriteISBNs
-        } catch {
-            print("즐겨찾기 상태 로드 실패: \(error)")
-        }
     }
 }

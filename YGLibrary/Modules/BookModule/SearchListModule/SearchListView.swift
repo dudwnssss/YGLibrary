@@ -16,18 +16,12 @@ struct SearchListView: View {
             SearchBarView(query: store.query) { text in
                 store.dispatch(.search(text))
             }
+            
             // 메인 콘텐츠
             Group {
                 if store.isLoading && store.state.books.isEmpty {
                     // 초기 로딩
-                    VStack(spacing: 16) {
-                        ProgressView()
-                            .scaleEffect(1.2)
-                        Text("검색 중...")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    loadingView
                     
                 } else if store.state.books.isEmpty && !store.query.isEmpty {
                     // 검색 결과 없음
@@ -38,20 +32,7 @@ struct SearchListView: View {
                     initialView
                     
                 } else {
-                    // 검색 결과 리스트 (오버레이 로딩 인디케이터 노출)
-                    ZStack {
-                        booksListView
-                        
-                        if (store.isLoading && !store.state.books.isEmpty) || store.isLoadingMore {
-                            VStack {
-                                Spacer()
-                                SpinnerView()
-                                Spacer()
-                            }
-                            .transition(.opacity)
-                            .animation(.easeInOut(duration: 0.25), value: store.isLoading)
-                        }
-                    }
+                    contentView
                 }
             }
         }
@@ -63,8 +44,68 @@ struct SearchListView: View {
             }
         }
     }
+        
+    private var contentView: some View {
+        ZStack(alignment: .bottom) {
+            List {
+                SearchSortView(store: store)
+                
+                // 책 목록
+                ForEach(store.state.books, id: \.isbn) { book in
+                    BookRowView(
+                        book: book,
+                        isFavorite: store.state.isFavorite(book),
+                        onTap: {
+                            store.dispatch(.navigateToDetail(book))
+                        },
+                        onFavoriteToggle: {
+                            store.dispatch(.toggleFavorite(book))
+                        }
+                    )
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(.init(top: 6, leading: 16, bottom: 6, trailing: 16))
+                    .onAppear {
+                        store.dispatch(.bookAppeared(book))
+                    }
+                }
+                
+                // 하단 로딩 인디케이터
+                if store.isLoadingMore {
+                    HStack {
+                        Spacer()
+                        VStack(spacing: 12) {
+                            SpinnerView()
+                                .scaleEffect(0.8)
+                            Text("더 많은 책을 불러오는 중...")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                    }
+                    .padding(.vertical, 20)
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets())
+                }
+            }
+            .listStyle(PlainListStyle())
+            .scrollDismissesKeyboard(.immediately)
+        }
+    }
     
     // MARK: - Subviews
+    
+    private var loadingView: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .scaleEffect(1.2)
+            Text("검색 중...")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
     
     private var initialView: some View {
         VStack(spacing: 20) {
@@ -107,37 +148,7 @@ struct SearchListView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
-    
-    private var booksListView: some View {
-        List {
-            SearchSortView(store: store)
-            ForEach(store.state.books, id: \.isbn) { book in
-                BookRowView(
-                    book: book,
-                    isFavorite: store.state.isFavorite(book),
-                    onTap: {
-                        store.dispatch(.navigateToDetail(book))
-                    },
-                    onFavoriteToggle: {
-                        store.dispatch(.toggleFavorite(book))
-                    }
-                )
-                .listRowSeparator(.hidden)
-                .listRowBackground(Color.clear)
-                .listRowInsets(.init(top: 6, leading: 16, bottom: 6, trailing: 16))
-                .onAppear {
-                    if book.isbn == store.state.books.last?.isbn {
-                        store.dispatch(.loadNextPage)
-                    }
-                }
-            }
-        }
-        .listStyle(PlainListStyle())
-        .scrollDismissesKeyboard(.immediately)
-    }
 }
-
-
 
 #Preview {
     SearchListView()

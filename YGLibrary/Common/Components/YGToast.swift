@@ -64,68 +64,70 @@ struct YGToastView: View {
     }
 }
 
+@MainActor
 final class ToastManager {
     static let shared = ToastManager()
     private var currentContainer: UIView?
     private var currentToastView: YGToastView?
     
     func show(_ config: ToastConfig) {
-        DispatchQueue.main.async {
-            // 기존거 즉시 제거
-            self.currentContainer?.removeFromSuperview()
+        // 기존거 즉시 제거
+        self.currentContainer?.removeFromSuperview()
+        
+        guard let vc = self.topViewController() else { return }
             
-            guard let vc = self.topViewController() else { return }
+        // 새로 만들기
+        let container = UIView()
+        let toastView = YGToastView(config: config)
+        let host = UIHostingController(rootView: toastView)
             
-            // 새로 만들기
-            let container = UIView()
-            let toastView = YGToastView(config: config)
-            let host = UIHostingController(rootView: toastView)
+        container.backgroundColor = .clear
+        host.view.backgroundColor = .clear
+        
+        container.addSubview(host.view)
+        vc.view.addSubview(container)
+        
+        container.translatesAutoresizingMaskIntoConstraints = false
+        host.view.translatesAutoresizingMaskIntoConstraints = false
+        
+        let leadingConstraint = container.leadingAnchor.constraint(equalTo: vc.view.leadingAnchor, constant: 16)
+        let trailingConstraint = container.trailingAnchor.constraint(equalTo: vc.view.trailingAnchor, constant: -16)
+        let bottomConstraint = container.bottomAnchor.constraint(equalTo: vc.view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+        
+        NSLayoutConstraint.activate([
+            leadingConstraint,
+            trailingConstraint,
+            bottomConstraint,
             
-            container.backgroundColor = .clear
-            host.view.backgroundColor = .clear
+            host.view.topAnchor.constraint(equalTo: container.topAnchor),
+            host.view.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+            host.view.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            host.view.trailingAnchor.constraint(equalTo: container.trailingAnchor)
+        ])
+        
+        let maxWidth = vc.view.frame.width - 32 // 좌우 여백 16씩
+        let tempSize = host.sizeThatFits(in: CGSize(width: maxWidth, height: UIView.layoutFittingExpandedSize.height))
+        let dynamicHeight = max(60, min(100, tempSize.height)) // 최소 60, 최대 100
+        
+        let heightConstraint = container.heightAnchor.constraint(equalToConstant: dynamicHeight)
+        heightConstraint.isActive = true
+        
+        self.currentContainer = container
+        self.currentToastView = toastView
+        
+        // 자동 사라짐 (접히면서)
+        Task {
+            try? await Task.sleep(nanoseconds: UInt64(config.duration * 1_000_000_000))
             
-            container.addSubview(host.view)
-            vc.view.addSubview(container)
-            
-            container.translatesAutoresizingMaskIntoConstraints = false
-            host.view.translatesAutoresizingMaskIntoConstraints = false
-            
-            let leadingConstraint = container.leadingAnchor.constraint(equalTo: vc.view.leadingAnchor, constant: 16)
-            let trailingConstraint = container.trailingAnchor.constraint(equalTo: vc.view.trailingAnchor, constant: -16)
-            let bottomConstraint = container.bottomAnchor.constraint(equalTo: vc.view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
-            
-            NSLayoutConstraint.activate([
-                leadingConstraint,
-                trailingConstraint,
-                bottomConstraint,
+            if self.currentContainer === container {
+                toastView.hide()
                 
-                host.view.topAnchor.constraint(equalTo: container.topAnchor),
-                host.view.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-                host.view.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-                host.view.trailingAnchor.constraint(equalTo: container.trailingAnchor)
-            ])
-            
-            let maxWidth = vc.view.frame.width - 32 // 좌우 여백 16씩
-            let tempSize = host.sizeThatFits(in: CGSize(width: maxWidth, height: UIView.layoutFittingExpandedSize.height))
-            let dynamicHeight = max(60, min(100, tempSize.height)) // 최소 60, 최대 100
-            
-            let heightConstraint = container.heightAnchor.constraint(equalToConstant: dynamicHeight)
-            heightConstraint.isActive = true
-            
-            self.currentContainer = container
-            self.currentToastView = toastView
-            
-            // 자동 사라짐 (접히면서)
-            DispatchQueue.main.asyncAfter(deadline: .now() + config.duration) {
+                try? await Task.sleep(nanoseconds: 300_000_000) // 0.3초
+                
                 if self.currentContainer === container {
-                    toastView.hide()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        if self.currentContainer === container {
-                            container.removeFromSuperview()
-                            self.currentContainer = nil
-                            self.currentToastView = nil
-                        }
-                    }
+                    container.removeFromSuperview()
+                    self.currentContainer = nil
+                    self.currentToastView = nil
                 }
             }
         }
@@ -156,6 +158,7 @@ final class ToastManager {
 }
 
 // MARK: - Service
+@MainActor
 protocol ToastService {
     func show(_ config: ToastConfig)
     func showAddFavorite()
@@ -163,6 +166,7 @@ protocol ToastService {
     func showNetworkError(_ message: String)
 }
 
+@MainActor
 struct ToastServiceImpl: ToastService {
     func show(_ config: ToastConfig) {
         ToastManager.shared.show(config)
@@ -183,6 +187,7 @@ struct ToastServiceImpl: ToastService {
 
 // MARK: - Dependencies
 private enum ToastServiceKey: DependencyKey {
+    @MainActor
     static let liveValue: ToastService = ToastServiceImpl()
 }
 

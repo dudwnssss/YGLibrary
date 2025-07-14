@@ -18,6 +18,88 @@ protocol FavoriteService {
     func loadFavoriteStatus() async throws
 }
 
+// MARK: - Actor-based FavoriteManager
+actor FavoriteManager {
+    private var favoriteISBNs: Set<String> = []
+    private var pendingToggleRequests: [String: Task<Bool, Error>] = [:]
+    
+    @Dependency(\.bookRepository) private var repository
+    
+    init() {
+        Task {
+            try? await loadInitialFavorites()
+        }
+    }
+    
+    func toggleFavorite(_ book: Book) async throws -> Bool {
+        // Check for existing pending request - Actor automatically ensures thread safety
+        if let existingTask = pendingToggleRequests[book.isbn] {
+            return try await existingTask.value
+        }
+        
+        // Create new toggle task
+        let toggleTask = Task<Bool, Error> {
+            defer {
+                removePendingRequest(for: book.isbn)
+            }
+            do {
+                let result = try await repository.toggleFavorite(book)
+                updateFavoriteStatus(isbn: book.isbn, isFavorite: result)
+                return result
+            } catch {
+                print("❌ FavoriteManager toggle failed: \(error)")
+                throw error
+            }
+        }
+        
+        pendingToggleRequests[book.isbn] = toggleTask
+        return try await toggleTask.value
+    }
+    
+    func isFavorite(isbn: String) -> Bool {
+        return favoriteISBNs.contains(isbn)
+    }
+    
+    func getAllFavoriteISBNs() -> Set<String> {
+        return favoriteISBNs
+    }
+    
+    func loadFavoriteStatus() async throws {
+        print("🔍 FavoriteManager.loadFavoriteStatus() 시작")
+        
+        do {
+            let isbns = try await repository.getAllFavoriteISBNs()
+            print("📋 repository에서 가져온 ISBNs: \(isbns)")
+            
+            favoriteISBNs = isbns
+            print("✅ favoriteISBNs 업데이트 완료: \(favoriteISBNs)")
+        } catch {
+            print("❌ loadFavoriteStatus 실패: \(error)")
+            throw error
+        }
+    }
+    
+    // MARK: - Private Methods
+    
+    private func removePendingRequest(for isbn: String) {
+        pendingToggleRequests.removeValue(forKey: isbn)
+    }
+    
+    private func updateFavoriteStatus(isbn: String, isFavorite: Bool) {
+        if isFavorite {
+            favoriteISBNs.insert(isbn)
+        } else {
+            favoriteISBNs.remove(isbn)
+        }
+    }
+    
+    private func loadInitialFavorites() async throws {
+        try await loadFavoriteStatus()
+    }
+}
+
+// MARK: - ObservableObject Wrapper for SwiftUI
+@MainActor
 final class FavoriteServiceImpl: FavoriteService, ObservableObject {
     @Published private var _favoriteISBNs: Set<String> = []
     
@@ -25,27 +107,24 @@ final class FavoriteServiceImpl: FavoriteService, ObservableObject {
         $_favoriteISBNs.eraseToAnyPublisher()
     }
     
-    private let repository: BookRepository
+    private let favoriteManager: FavoriteManager
     
-    init(repository: BookRepository = BookRepositoryImpl.shared) {
-        self.repository = repository
+    init() {
+        self.favoriteManager = FavoriteManager()
+        
+        // Actor의 상태를 주기적으로 동기화
         Task {
-            try? await loadFavoriteStatus()
+            await syncFavoriteStatus()
         }
     }
     
     func toggleFavorite(_ book: Book) async throws -> Bool {
-        let isFavorited = try await repository.toggleFavorite(book)
+        let result = try await favoriteManager.toggleFavorite(book)
         
-        await MainActor.run {
-            if isFavorited {
-                _favoriteISBNs.insert(book.isbn)
-            } else {
-                _favoriteISBNs.remove(book.isbn)
-            }
-        }
+        // UI 상태 즉시 업데이트 (MainActor에서 실행)
+        await syncFavoriteStatus()
         
-        return isFavorited
+        return result
     }
     
     func isFavorite(isbn: String) -> Bool {
@@ -53,28 +132,25 @@ final class FavoriteServiceImpl: FavoriteService, ObservableObject {
     }
     
     func loadFavoriteStatus() async throws {
-        print("🔍 FavoriteService.loadFavoriteStatus() 시작")
-        
-        do {
-            let favoriteISBNs = try await repository.getAllFavoriteISBNs()
-            print("📋 repository에서 가져온 ISBNs: \(favoriteISBNs)")
-            
-            await MainActor.run {
-                _favoriteISBNs = favoriteISBNs
-                print("✅ _favoriteISBNs 업데이트 완료: \(_favoriteISBNs)")
-                print("📤 Publisher로 전송될 값: \(_favoriteISBNs)")
-            }
-        } catch {
-            print("❌ loadFavoriteStatus 실패: \(error)")
-            throw error
-        }
+        try await favoriteManager.loadFavoriteStatus()
+        await syncFavoriteStatus()
+    }
+    
+    // MARK: - Private Methods
+    
+    private func syncFavoriteStatus() async {
+        let currentFavorites = await favoriteManager.getAllFavoriteISBNs()
+        _favoriteISBNs = currentFavorites
+        print("📤 UI 상태 동기화 완료: \(_favoriteISBNs)")
     }
 }
 
+// MARK: - Singleton for Dependencies
 extension FavoriteServiceImpl {
     static let shared = FavoriteServiceImpl()
 }
 
+// MARK: - Dependencies Integration
 struct FavoriteServiceKey: DependencyKey {
     static let liveValue: FavoriteService = FavoriteServiceImpl.shared
 }
