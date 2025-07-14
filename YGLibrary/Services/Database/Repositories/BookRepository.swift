@@ -22,8 +22,6 @@ protocol BookRepository {
 
 final class BookRepositoryImpl: BookRepository {
     @Dependency(\.databaseService) private var service
-    
-    // 🔧 싱글톤으로 변경
     static let shared = BookRepositoryImpl()
     private init() {}
     

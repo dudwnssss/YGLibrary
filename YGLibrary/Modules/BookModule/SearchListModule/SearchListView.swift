@@ -16,16 +16,9 @@ struct SearchListView: View {
             SearchBarView(query: store.query) { text in
                 store.dispatch(.search(text))
             }
-
-            
-            // 정렬/필터
-            if !store.books.isEmpty || !store.query.isEmpty {
-                SearchSortView(store: store)
-            }
-            
             // 메인 콘텐츠
             Group {
-                if store.isLoading && store.books.isEmpty {
+                if store.isLoading && store.state.books.isEmpty {
                     // 초기 로딩
                     VStack(spacing: 16) {
                         ProgressView()
@@ -36,17 +29,29 @@ struct SearchListView: View {
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     
-                } else if store.books.isEmpty && !store.query.isEmpty {
+                } else if store.state.books.isEmpty && !store.query.isEmpty {
                     // 검색 결과 없음
                     emptySearchView
                     
-                } else if store.books.isEmpty {
+                } else if store.state.books.isEmpty {
                     // 초기 상태
                     initialView
                     
                 } else {
-                    // 검색 결과 리스트
-                    booksListView
+                    // 검색 결과 리스트 (오버레이 로딩 인디케이터 노출)
+                    ZStack {
+                        booksListView
+                        
+                        if (store.isLoading && !store.state.books.isEmpty) || store.isLoadingMore {
+                            VStack {
+                                Spacer()
+                                SpinnerView()
+                                Spacer()
+                            }
+                            .transition(.opacity)
+                            .animation(.easeInOut(duration: 0.25), value: store.isLoading)
+                        }
+                    }
                 }
             }
         }
@@ -105,7 +110,8 @@ struct SearchListView: View {
     
     private var booksListView: some View {
         List {
-            ForEach(store.books, id: \.isbn) { book in
+            SearchSortView(store: store)
+            ForEach(store.state.books, id: \.isbn) { book in
                 BookRowView(
                     book: book,
                     isFavorite: store.state.isFavorite(book),
@@ -120,32 +126,18 @@ struct SearchListView: View {
                 .listRowBackground(Color.clear)
                 .listRowInsets(.init(top: 6, leading: 16, bottom: 6, trailing: 16))
                 .onAppear {
-                    if book.isbn == store.books.last?.isbn {
+                    if book.isbn == store.state.books.last?.isbn {
                         store.dispatch(.loadNextPage)
                     }
                 }
-            }
-            
-            // 추가 로딩 인디케이터
-            if store.isLoadingMore {
-                HStack {
-                    Spacer()
-                    ProgressView()
-                        .scaleEffect(0.9)
-                    Text("더 불러오는 중...")
-                        .font(.system(size: 14))
-                        .foregroundColor(.secondary)
-                    Spacer()
-                }
-                .padding(.vertical, 16)
-                .listRowSeparator(.hidden)
-                .listRowBackground(Color.clear)
             }
         }
         .listStyle(PlainListStyle())
         .scrollDismissesKeyboard(.immediately)
     }
 }
+
+
 
 #Preview {
     SearchListView()

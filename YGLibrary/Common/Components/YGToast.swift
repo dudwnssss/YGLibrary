@@ -9,7 +9,6 @@ import SwiftUI
 import UIKit
 import Dependencies
 
-// MARK: - Config
 struct ToastConfig {
     let message: String
     let icon: String?
@@ -24,22 +23,23 @@ struct ToastConfig {
     }
 }
 
-// MARK: - Toast View
-struct ToastView: View {
+struct YGToastView: View {
     let config: ToastConfig
     @State private var scale: CGFloat = 0
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(alignment: .center, spacing: 12) {
             if let icon = config.icon {
                 Image(systemName: icon)
                     .font(.system(size: 20, weight: .medium))
                     .foregroundColor(config.iconColor)
             }
-            
             Text(config.message)
-                .font(.system(size: 16, weight: .medium))
+                .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white)
+                .lineLimit(2)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
             
             Spacer()
         }
@@ -64,11 +64,10 @@ struct ToastView: View {
     }
 }
 
-// MARK: - Simple Manager
 final class ToastManager {
     static let shared = ToastManager()
     private var currentContainer: UIView?
-    private var currentToastView: ToastView?
+    private var currentToastView: YGToastView?
     
     func show(_ config: ToastConfig) {
         DispatchQueue.main.async {
@@ -79,7 +78,7 @@ final class ToastManager {
             
             // 새로 만들기
             let container = UIView()
-            let toastView = ToastView(config: config)
+            let toastView = YGToastView(config: config)
             let host = UIHostingController(rootView: toastView)
             
             container.backgroundColor = .clear
@@ -88,21 +87,30 @@ final class ToastManager {
             container.addSubview(host.view)
             vc.view.addSubview(container)
             
-            // 제약조건
             container.translatesAutoresizingMaskIntoConstraints = false
             host.view.translatesAutoresizingMaskIntoConstraints = false
             
+            let leadingConstraint = container.leadingAnchor.constraint(equalTo: vc.view.leadingAnchor, constant: 16)
+            let trailingConstraint = container.trailingAnchor.constraint(equalTo: vc.view.trailingAnchor, constant: -16)
+            let bottomConstraint = container.bottomAnchor.constraint(equalTo: vc.view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+            
             NSLayoutConstraint.activate([
-                container.leadingAnchor.constraint(equalTo: vc.view.leadingAnchor, constant: 16),
-                container.trailingAnchor.constraint(equalTo: vc.view.trailingAnchor, constant: -16),
-                container.bottomAnchor.constraint(equalTo: vc.view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
-                container.heightAnchor.constraint(equalToConstant: 60),
+                leadingConstraint,
+                trailingConstraint,
+                bottomConstraint,
                 
                 host.view.topAnchor.constraint(equalTo: container.topAnchor),
                 host.view.bottomAnchor.constraint(equalTo: container.bottomAnchor),
                 host.view.leadingAnchor.constraint(equalTo: container.leadingAnchor),
                 host.view.trailingAnchor.constraint(equalTo: container.trailingAnchor)
             ])
+            
+            let maxWidth = vc.view.frame.width - 32 // 좌우 여백 16씩
+            let tempSize = host.sizeThatFits(in: CGSize(width: maxWidth, height: UIView.layoutFittingExpandedSize.height))
+            let dynamicHeight = max(60, min(100, tempSize.height)) // 최소 60, 최대 100
+            
+            let heightConstraint = container.heightAnchor.constraint(equalToConstant: dynamicHeight)
+            heightConstraint.isActive = true
             
             self.currentContainer = container
             self.currentToastView = toastView
@@ -152,6 +160,7 @@ protocol ToastService {
     func show(_ config: ToastConfig)
     func showAddFavorite()
     func showRemoveFavorite()
+    func showNetworkError(_ message: String)
 }
 
 struct ToastServiceImpl: ToastService {
@@ -165,6 +174,10 @@ struct ToastServiceImpl: ToastService {
     
     func showRemoveFavorite() {
         show(ToastConfig(message: "즐겨찾기에서 해제되었어요.", icon: "heart.fill", iconColor: .white))
+    }
+    
+    func showNetworkError(_ message: String) {
+        show(ToastConfig(message: message, icon: "wifi.exclamationmark", iconColor: .orange, duration: 3.0))
     }
 }
 

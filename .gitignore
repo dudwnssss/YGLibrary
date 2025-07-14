@@ -1,1 +1,2 @@
 *.xcconfig
+/YGLibrary/Application/Secrets.swift

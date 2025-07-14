@@ -18,22 +18,21 @@ struct BookRowView: View {
         Button(action: onTap) {
             HStack(alignment: .top, spacing: 12) {
                 // 책 이미지
-                AsyncImage(url: book.thumbnail) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.gray.opacity(0.2))
-                        .overlay(
-                            Image(systemName: "book.closed")
-                                .foregroundColor(.gray)
-                                .font(.title2)
-                        )
-                }
-                .frame(width: 60, height: 85)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-                .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+                KFImage(book.thumbnail)
+                    .placeholder {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.gray.opacity(0.2))
+                            .overlay(
+                                Image(systemName: "book.closed")
+                                    .foregroundColor(.gray)
+                                    .font(.title2)
+                            )
+                    }
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 80, height: 120)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
                 
                 // 책 정보
                 VStack(alignment: .leading, spacing: 4) {
@@ -77,6 +76,19 @@ struct BookRowView: View {
                             .lineLimit(1)
                     }
                     
+                    // 출간일
+                    if let dateTime = book.dateTime {
+                        HStack(spacing: 4) {
+                            Text("출간일")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text(DateFormatter.formatter(style: .short).string(from: dateTime))
+                                .font(.caption)
+                                .foregroundColor(.primary)
+                                .fontWeight(.medium)
+                        }
+                    }
+                    
                     Spacer()
                 }
                 
@@ -86,7 +98,7 @@ struct BookRowView: View {
                 VStack(alignment: .trailing, spacing: 8) {
                     // 즐겨찾기 버튼
                     Button(action: onFavoriteToggle) {
-                        Image(systemName: isFavorite ? "heart.fill" : "heart")
+                        Image(systemName: "heart.fill")
                             .font(.system(size: 18, weight: .medium))
                             .foregroundColor(isFavorite ? .red : .gray)
                             .frame(width: 32, height: 32)
@@ -102,14 +114,14 @@ struct BookRowView: View {
                     
                     // 가격
                     VStack(alignment: .trailing, spacing: 2) {
-                        if book.pricing.salePrice < book.pricing.originPrice {
+                        if book.hasDiscount {
                             Text(book.pricing.displayOriginPrice)
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                                 .strikethrough()
                         }
                         
-                        Text(book.pricing.salePrice < book.pricing.originPrice ? 
+                        Text(book.hasDiscount ?
                              book.pricing.displaySalePrice : book.pricing.displayOriginPrice)
                             .font(.system(size: 16, weight: .bold))
                             .foregroundColor(.primary)

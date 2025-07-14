@@ -25,13 +25,10 @@ final class FavoriteServiceImpl: FavoriteService, ObservableObject {
         $_favoriteISBNs.eraseToAnyPublisher()
     }
     
-    // 🔧 Dependencies 대신 직접 주입
     private let repository: BookRepository
     
     init(repository: BookRepository = BookRepositoryImpl.shared) {
         self.repository = repository
-        
-        // 🔧 초기화 후 즉시 데이터 로드
         Task {
             try? await loadFavoriteStatus()
         }
@@ -74,7 +71,6 @@ final class FavoriteServiceImpl: FavoriteService, ObservableObject {
     }
 }
 
-// 🔧 싱글톤 인스턴스 생성
 extension FavoriteServiceImpl {
     static let shared = FavoriteServiceImpl()
 }

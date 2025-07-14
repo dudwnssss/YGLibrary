@@ -16,7 +16,7 @@ struct YGScaleButtonStyle: ButtonStyle {
     let minTapTargetSize: CGSize = CGSize(width: 44, height: 44)
     
     init(
-        scale: CGFloat = 0.96,
+        scale: CGFloat = 0.95,
         backgroundColor: Color = Color(uiColor: .systemGray6),
         cornerRadius: CGFloat = 8,
         duration: Double = 0.1

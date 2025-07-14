@@ -49,17 +49,6 @@ final class FavoriteListStore: Store {
         setSubscription()
     }
     
-    private func setSubscription() {
-        // 즐겨찾기 상태만 업데이트, UI는 그대로 유지
-        favoriteService.favoriteISBNs
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] isbns in
-                self?.state.favoriteISBNs = isbns
-                // 🎯 즉시 제거하지 않음 - UI는 그대로 유지
-            }
-            .store(in: &cancellables)
-    }
-    
     func dispatch(_ action: Action) {
         switch action {
         case .onAppear:
@@ -106,8 +95,15 @@ final class FavoriteListStore: Store {
     }
 }
 
-// MARK: - Private Methods
 extension FavoriteListStore {
+    private func setSubscription() {
+        favoriteService.favoriteISBNs
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isbns in
+                self?.state.favoriteISBNs = isbns
+            }
+            .store(in: &cancellables)
+    }
     
     private func loadInitialData() async {
         do {
@@ -209,8 +205,6 @@ extension FavoriteListStore {
                     }
                 } else {
                     toastService.showRemoveFavorite()
-                    // 🎯 제거의 경우 UI에서 즉시 제거하지 않음
-                    // 사용자가 새로고침할 때까지 화면에 남아있음
                 }
             }
         } catch {

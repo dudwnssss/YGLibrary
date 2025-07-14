@@ -14,10 +14,6 @@ struct FavoriteListView: View {
         VStack(spacing: 0) {
             searchButtonView
             
-            if !store.state.allBooks.isEmpty {
-                FavoriteSortFilterView(store: store)
-            }
-            
             Group {
                 if store.state.isLoading {
                     VStack(spacing: 16) {
@@ -40,6 +36,7 @@ struct FavoriteListView: View {
                 } else {
                     // 즐겨찾기 리스트
                     List {
+                        FavoriteSortFilterView(store: store)
                         ForEach(store.state.books, id: \.isbn) { book in
                             BookRowView(
                                 book: book,

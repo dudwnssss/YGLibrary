@@ -47,6 +47,17 @@ struct Book: Identifiable {
             return salePrice.formatted() + "원"
         }
     }
+    
+    var displayPrice: String {
+        if pricing.salePrice > 0 {
+            return pricing.displaySalePrice
+        }
+        return pricing.displayOriginPrice
+    }
+    
+    var hasDiscount: Bool {
+        pricing.salePrice > 0 && pricing.salePrice < pricing.originPrice
+    }
 }
 
 extension Book {
@@ -79,9 +90,18 @@ extension Book {
         self.thumbnail = entity.thumbnail != nil ? URL(string: entity.thumbnail!) : nil
         self.status = entity.status
     }
-    
+}
+
+extension Book {
     private static func parseDate(from dateString: String) -> Date? {
-        let formatter = ISO8601DateFormatter()
-        return formatter.date(from: dateString)
+        // 1. ISO8601DateFormatter로 시도
+        let iso8601Formatter = ISO8601DateFormatter()
+        iso8601Formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        
+        guard let date = iso8601Formatter.date(from: dateString) else {
+            return nil
+        }
+        
+        return date
     }
 }

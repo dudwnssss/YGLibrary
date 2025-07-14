@@ -22,7 +22,8 @@ final class SearchListStore: Store {
     }
     
     struct State {
-        var books: [Book] = []
+        var allBooks: [Book] = []          // 중복 제거 전 원본 데이터
+        var books: [Book] = []             // 화면에 표시될 최종 데이터 (중복 제거 + 정렬 적용)
         var meta: MetaResponse<BookDTO>.Meta?
         var sortType: SearchSortType = .accuracy
         var isLoading: Bool = false
@@ -51,11 +52,17 @@ final class SearchListStore: Store {
     @Dependency(\.bookService) private var service
     @Dependency(\.bookRepository) private var repository
     @Dependency(\.favoriteService) private var favoriteService
-    @Dependency(\.toast) private var toastService
+    @Dependency(\.toast) private var toast
     
     private var currentSearchTask: Task<Void, Never>?
     private var currentLoadMoreTask: Task<Void, Never>?
     private var cancellables = Set<AnyCancellable>()
+    
+    // 호환성을 위한 computed properties
+    var query: String { state.query }
+    var sortType: SearchSortType { state.sortType }
+    var isLoading: Bool { state.isLoading }
+    var isLoadingMore: Bool { state.isLoadingMore }
     
     init() {
         setSubscription()
@@ -83,12 +90,25 @@ final class SearchListStore: Store {
         case .sort(let sort):
             state.sortType = sort
             if !state.query.isEmpty {
+                state.isLoading = true
                 resetAndSearch()
             }
             
         case .search(let query):
             state.query = query
-            resetAndSearch()
+            
+            // 검색어가 있을 때만 로딩 상태 처리
+            if !query.isEmpty {
+                // 기존 데이터가 있으면 오버레이 로딩, 없으면 전체 화면 로딩
+                state.isLoading = true
+                resetAndSearch()
+            } else {
+                // 검색어가 비어있으면 결과 초기화
+                state.allBooks = []
+                state.books = []
+                state.meta = nil
+                state.isLoading = false
+            }
             
         case .loadNextPage:
             // 이미 로딩 중이거나 더 이상 데이터가 없으면 중단
@@ -115,7 +135,8 @@ extension SearchListStore {
         currentLoadMoreTask = nil
         
         state.currentPage = 1
-        state.books = []
+        state.allBooks = []
+        // 기존 books는 유지해서 UI 깜뿍임 방지 (새로운 데이터 로드 시 업데이트)
         state.meta = nil
         
         currentSearchTask = Task {
@@ -125,6 +146,7 @@ extension SearchListStore {
     
     private func loadData(isLoadingMore: Bool) async {
         guard !state.query.isEmpty else {
+            state.allBooks = []
             state.books = []
             state.meta = nil
             return
@@ -134,9 +156,8 @@ extension SearchListStore {
         
         if isLoadingMore {
             state.isLoadingMore = true
-        } else {
-            state.isLoading = true
         }
+        // 이미 search 액션에서 isLoading을 설정했으므로 여기서는 설정하지 않음
         
         do {
             let response = try await service.getSearchBook(
@@ -150,14 +171,14 @@ extension SearchListStore {
             state.meta = response.meta
             
             if isLoadingMore {
-                // 중복 방지: 기존 책 목록에 없는 책만 추가
                 let newBooks = response.documents.map { Book(from: $0) }
-                let existingISBNs = Set(state.books.map { $0.isbn })
-                let uniqueNewBooks = newBooks.filter { !existingISBNs.contains($0.isbn) }
-                state.books.append(contentsOf: uniqueNewBooks)
+                state.allBooks.append(contentsOf: newBooks)
             } else {
-                state.books = response.documents.map { Book(from: $0) }
+                state.allBooks = response.documents.map { Book(from: $0) }
             }
+            
+            // 중복 제거 및 정렬 적용
+            applyUniqueAndSort()
             
             await loadFavoriteStatus()
             
@@ -168,10 +189,34 @@ extension SearchListStore {
             if isLoadingMore {
                 state.currentPage -= 1
             }
+            
+            if let networkError = error as? NetworkError {
+                switch networkError {
+                case .networkUnavailable, .timeout, .connectionLost:
+                    toast.show(.init(message: error.localizedDescription, icon: "info.circle"))
+                default:
+                    break
+                }
+            }
         }
         
         state.isLoading = false
         state.isLoadingMore = false
+    }
+    
+    // 🎯 중복 제거 및 정렬 적용
+    private func applyUniqueAndSort() {
+        var seenISBNs: Set<String> = []
+        let uniqueBooks = state.allBooks.filter { book in
+            if seenISBNs.contains(book.isbn) {
+                return false
+            } else {
+                seenISBNs.insert(book.isbn)
+                return true
+            }
+        }
+        
+        state.books = uniqueBooks
     }
     
     private func toggleFavorite(_ book: Book) async {
@@ -180,9 +225,9 @@ extension SearchListStore {
             
             await MainActor.run {
                 if isFavorite {
-                    toastService.showAddFavorite()
+                    toast.showAddFavorite()
                 } else {
-                    toastService.showRemoveFavorite()
+                    toast.showRemoveFavorite()
                 }
             }
          } catch {

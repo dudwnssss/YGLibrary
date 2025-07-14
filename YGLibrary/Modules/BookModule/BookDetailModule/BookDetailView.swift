@@ -9,7 +9,6 @@ import SwiftUI
 
 import Kingfisher
 
-
 struct BookDetailView: View {
     @StateObject var store: BookDetailStore
     
@@ -39,11 +38,6 @@ struct BookDetailView: View {
                 }
             }
             
-            YGToolbarItem.principal {
-                Text("도서 상세")
-                    .font(.system(size: 18, weight: .semibold))
-            }
-            
             YGToolbarItem.trailing {
                 Button(action: {
                     store.dispatch(.toggleFavorite)
@@ -66,22 +60,21 @@ struct BookDetailView: View {
     private var bookHeaderSection: some View {
         HStack(alignment: .top, spacing: 16) {
             // 책 이미지
-            AsyncImage(url: store.state.book.thumbnail) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } placeholder: {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.gray.opacity(0.2))
-                    .overlay(
-                        Image(systemName: "book.closed")
-                            .foregroundColor(.gray)
-                            .font(.title)
-                    )
-            }
-            .frame(width: 120, height: 170)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
+            KFImage(store.state.book.thumbnail)
+                .placeholder {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.gray.opacity(0.2))
+                        .overlay(
+                            Image(systemName: "book.closed")
+                                .foregroundColor(.gray)
+                                .font(.title)
+                        )
+                }
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: 140, height: 200)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
             
             // 책 정보
             VStack(alignment: .leading, spacing: 12) {
@@ -118,7 +111,7 @@ struct BookDetailView: View {
                         Text("출간일")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(.secondary)
-                        Text(DateFormatter.bookDate.string(from: dateTime))
+                        Text(DateFormatter.formatter(style: .full).string(from: dateTime))
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(.primary)
                     }
@@ -151,11 +144,11 @@ struct BookDetailView: View {
                 DetailRowView(
                     label: "정상가", 
                     value: store.state.book.pricing.displayOriginPrice,
-                    valueColor: store.state.book.pricing.salePrice < store.state.book.pricing.originPrice ? .secondary : .primary,
-                    isStrikethrough: store.state.book.pricing.salePrice < store.state.book.pricing.originPrice
+                    valueColor: store.book.hasDiscount ? .secondary : .primary,
+                    isStrikethrough: store.book.hasDiscount
                 )
                 
-                if store.state.book.pricing.salePrice < store.state.book.pricing.originPrice {
+                if store.book.hasDiscount {
                     Divider()
                         .padding(.horizontal, 16)
                     
@@ -221,12 +214,4 @@ struct DetailRowView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
     }
-}
-
-extension DateFormatter {
-    static let bookDate: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy년 MM월 dd일"
-        return formatter
-    }()
 }
