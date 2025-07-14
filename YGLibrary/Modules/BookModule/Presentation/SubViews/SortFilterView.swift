@@ -139,7 +139,7 @@ struct SortBottomSheetView<SortType: Sortable>: View {
     @Dependency(\.router) private var router
     
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: .zero) {
             // 상단 핸들
             RoundedRectangle(cornerRadius: 2.5)
                 .fill(Color.gray.opacity(0.3))
@@ -147,7 +147,7 @@ struct SortBottomSheetView<SortType: Sortable>: View {
                 .padding(.top, 12) // 🔧 패딩 증가
                 .padding(.bottom, 24) // 🔧 패딩 감소
             
-            VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: .zero) {
                 // 헤더
                 HStack {
                     Text("정렬")
@@ -159,7 +159,7 @@ struct SortBottomSheetView<SortType: Sortable>: View {
                 .padding(.bottom, 24) // 🔧 패딩 감소
                 
                 // 정렬 옵션들
-                VStack(spacing: 0) {
+                VStack(spacing: .zero) {
                     ForEach(Array(sortOptions.enumerated()), id: \.offset) { index, sortType in
                         Button(action: {
                             onSortSelected(sortType)

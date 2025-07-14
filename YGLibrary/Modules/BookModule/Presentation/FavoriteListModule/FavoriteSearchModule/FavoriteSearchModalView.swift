@@ -20,7 +20,7 @@ struct FavoriteSearchModalView: View {
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 0) {
+            VStack(spacing: .zero) {
                 // 검색바
                 searchBarSection
                 
@@ -69,7 +69,7 @@ struct FavoriteSearchModalView: View {
     // MARK: - Subviews
     
     private var searchBarSection: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: .zero) {
             HStack(spacing: 12) {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 16, weight: .medium))
@@ -175,7 +175,7 @@ struct FavoriteSearchModalView: View {
     
     private var suggestionsListView: some View {
         ScrollView {
-            LazyVStack(spacing: 0) {
+            LazyVStack(spacing: .zero) {
                 ForEach(store.state.suggestions) { suggestion in
                     SearchSuggestionRowView(
                         suggestion: suggestion,

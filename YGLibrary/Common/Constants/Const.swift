@@ -6,3 +6,7 @@
 //
 
 import SwiftUI
+
+enum Const {
+  
+}

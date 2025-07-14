@@ -11,16 +11,16 @@ import Combine
 import Dependencies
 
 protocol FavoriteService {
-    var favoriteISBNs: AnyPublisher<Set<String>, Never> { get }
+    var favoriteUniqueIds: AnyPublisher<Set<String>, Never> { get }
 
     func toggleFavorite(_ book: Book) async throws -> Bool
-    func isFavorite(isbn: String) -> Bool
+    func isFavorite(uniqueId: String) -> Bool
     func loadFavoriteStatus() async throws
 }
 
 // MARK: - Actor-based FavoriteManager
 actor FavoriteManager {
-    private var favoriteISBNs: Set<String> = []
+    private var favoriteUniqueIds: Set<String> = []
     private var pendingToggleRequests: [String: Task<Bool, Error>] = [:]
     
     @Dependency(\.bookRepository) private var repository
@@ -33,18 +33,18 @@ actor FavoriteManager {
     
     func toggleFavorite(_ book: Book) async throws -> Bool {
         // Check for existing pending request - Actor automatically ensures thread safety
-        if let existingTask = pendingToggleRequests[book.isbn] {
+        if let existingTask = pendingToggleRequests[book.id] {
             return try await existingTask.value
         }
         
         // Create new toggle task
         let toggleTask = Task<Bool, Error> {
             defer {
-                removePendingRequest(for: book.isbn)
+                removePendingRequest(for: book.id)
             }
             do {
                 let result = try await repository.toggleFavorite(book)
-                updateFavoriteStatus(isbn: book.isbn, isFavorite: result)
+                updateFavoriteStatus(uniqueId: book.id, isFavorite: result)
                 return result
             } catch {
                 print("❌ FavoriteManager toggle failed: \(error)")
@@ -52,27 +52,27 @@ actor FavoriteManager {
             }
         }
         
-        pendingToggleRequests[book.isbn] = toggleTask
+        pendingToggleRequests[book.id] = toggleTask
         return try await toggleTask.value
     }
     
-    func isFavorite(isbn: String) -> Bool {
-        return favoriteISBNs.contains(isbn)
+    func isFavorite(uniqueId: String) -> Bool {
+        return favoriteUniqueIds.contains(uniqueId)
     }
     
-    func getAllFavoriteISBNs() -> Set<String> {
-        return favoriteISBNs
+    func getAllFavoriteUniqueIds() -> Set<String> {
+        return favoriteUniqueIds
     }
     
     func loadFavoriteStatus() async throws {
         print("🔍 FavoriteManager.loadFavoriteStatus() 시작")
         
         do {
-            let isbns = try await repository.getAllFavoriteISBNs()
-            print("📋 repository에서 가져온 ISBNs: \(isbns)")
+            let uniqueIds = try await repository.getAllFavoriteUniqueIds()
+            print("📋 repository에서 가져온 UniqueIds: \(uniqueIds)")
             
-            favoriteISBNs = isbns
-            print("✅ favoriteISBNs 업데이트 완료: \(favoriteISBNs)")
+            favoriteUniqueIds = uniqueIds
+            print("✅ favoriteUniqueIds 업데이트 완료: \(favoriteUniqueIds)")
         } catch {
             print("❌ loadFavoriteStatus 실패: \(error)")
             throw error
@@ -81,15 +81,15 @@ actor FavoriteManager {
     
     // MARK: - Private Methods
     
-    private func removePendingRequest(for isbn: String) {
-        pendingToggleRequests.removeValue(forKey: isbn)
+    private func removePendingRequest(for uniqueId: String) {
+        pendingToggleRequests.removeValue(forKey: uniqueId)
     }
     
-    private func updateFavoriteStatus(isbn: String, isFavorite: Bool) {
+    private func updateFavoriteStatus(uniqueId: String, isFavorite: Bool) {
         if isFavorite {
-            favoriteISBNs.insert(isbn)
+            favoriteUniqueIds.insert(uniqueId)
         } else {
-            favoriteISBNs.remove(isbn)
+            favoriteUniqueIds.remove(uniqueId)
         }
     }
     
@@ -101,10 +101,10 @@ actor FavoriteManager {
 // MARK: - ObservableObject Wrapper for SwiftUI
 @MainActor
 final class FavoriteServiceImpl: FavoriteService, ObservableObject {
-    @Published private var _favoriteISBNs: Set<String> = []
+    @Published private var _favoriteUniqueIds: Set<String> = []
     
-    var favoriteISBNs: AnyPublisher<Set<String>, Never> {
-        $_favoriteISBNs.eraseToAnyPublisher()
+    var favoriteUniqueIds: AnyPublisher<Set<String>, Never> {
+        $_favoriteUniqueIds.eraseToAnyPublisher()
     }
     
     private let favoriteManager: FavoriteManager
@@ -127,8 +127,8 @@ final class FavoriteServiceImpl: FavoriteService, ObservableObject {
         return result
     }
     
-    func isFavorite(isbn: String) -> Bool {
-        return _favoriteISBNs.contains(isbn)
+    func isFavorite(uniqueId: String) -> Bool {
+        return _favoriteUniqueIds.contains(uniqueId)
     }
     
     func loadFavoriteStatus() async throws {
@@ -139,9 +139,9 @@ final class FavoriteServiceImpl: FavoriteService, ObservableObject {
     // MARK: - Private Methods
     
     private func syncFavoriteStatus() async {
-        let currentFavorites = await favoriteManager.getAllFavoriteISBNs()
-        _favoriteISBNs = currentFavorites
-        print("📤 UI 상태 동기화 완료: \(_favoriteISBNs)")
+        let currentFavorites = await favoriteManager.getAllFavoriteUniqueIds()
+        _favoriteUniqueIds = currentFavorites
+        print("📤 UI 상태 동기화 완료: \(_favoriteUniqueIds)")
     }
 }
 

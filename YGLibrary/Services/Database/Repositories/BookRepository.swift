@@ -9,18 +9,16 @@ import Foundation
 import Dependencies
 import GRDB
 
-// MARK: - BookRepository Protocol (Keep for abstraction)
 protocol BookRepository {
     func addToFavorites(_ book: Book) async throws
-    func removeFromFavorites(isbn: String) async throws
+    func removeFromFavorites(uniqueId: String) async throws
     func toggleFavorite(_ book: Book) async throws -> Bool
-    func isFavorite(isbn: String) async throws -> Bool
+    func isFavorite(uniqueId: String) async throws -> Bool
     
     func getAllFavoriteBooks() async throws -> [Book]
-    func getAllFavoriteISBNs() async throws -> Set<String>
+    func getAllFavoriteUniqueIds() async throws -> Set<String>
 }
 
-// MARK: - Actor Implementation (Direct Dependencies Usage)
 actor BookRepositoryActor: BookRepository {
     @Dependency(\.databaseService) private var databaseService
     
@@ -33,11 +31,11 @@ actor BookRepositoryActor: BookRepository {
         }
     }
 
-    func removeFromFavorites(isbn: String) async throws {
+    func removeFromFavorites(uniqueId: String) async throws {
         try await databaseService.write { db in
             try db.execute(
-                sql: "DELETE FROM favorite_books WHERE isbn = ?",
-                arguments: [isbn]
+                sql: "DELETE FROM favorite_books WHERE uniqueId = ?",
+                arguments: [uniqueId]
             )
         }
     }
@@ -46,10 +44,10 @@ actor BookRepositoryActor: BookRepository {
         return try await databaseService.write { [weak self] db in
             guard let self = self else { throw DatabaseError.actorDeallocated }
             
-            let currentlyFavorite = try checkIsFavorite(isbn: book.isbn, db: db)
+            let currentlyFavorite = try checkIsFavorite(uniqueId: book.id, db: db)
             
             if currentlyFavorite {
-                try removeFavoriteInTransaction(isbn: book.isbn, db: db)
+                try removeFavoriteInTransaction(uniqueId: book.id, db: db)
                 return false
             } else {
                 try addFavoriteInTransaction(book, db: db)
@@ -58,10 +56,10 @@ actor BookRepositoryActor: BookRepository {
         }
     }
     
-    func isFavorite(isbn: String) async throws -> Bool {
+    func isFavorite(uniqueId: String) async throws -> Bool {
         return try await databaseService.read { [weak self] db in
             guard let self = self else { throw DatabaseError.actorDeallocated }
-            return try checkIsFavorite(isbn: isbn, db: db)
+            return try checkIsFavorite(uniqueId: uniqueId, db: db)
         }
     }
 
@@ -74,23 +72,23 @@ actor BookRepositoryActor: BookRepository {
         }
     }
     
-    func getAllFavoriteISBNs() async throws -> Set<String> {
+    func getAllFavoriteUniqueIds() async throws -> Set<String> {
         return try await databaseService.read { db in
-            let isbns = try String.fetchAll(
+            let uniqueIds = try String.fetchAll(
                 db,
-                sql: "SELECT isbn FROM favorite_books"
+                sql: "SELECT uniqueId FROM favorite_books"
             )
-            return Set(isbns)
+            return Set(uniqueIds)
         }
     }
-    
-    // MARK: - Private Helpers (nonisolated for closures)
-    
-    nonisolated private func checkIsFavorite(isbn: String, db: Database) throws -> Bool {
+}
+
+extension BookRepositoryActor {
+    nonisolated private func checkIsFavorite(uniqueId: String, db: Database) throws -> Bool {
         let count = try Int.fetchOne(
             db,
-            sql: "SELECT COUNT(*) FROM favorite_books WHERE isbn = ?",
-            arguments: [isbn]
+            sql: "SELECT COUNT(*) FROM favorite_books WHERE uniqueId = ?",
+            arguments: [uniqueId]
         ) ?? 0
         return count > 0
     }
@@ -100,15 +98,15 @@ actor BookRepositoryActor: BookRepository {
         try favoriteBook.insert(db)
     }
     
-    nonisolated private func removeFavoriteInTransaction(isbn: String, db: Database) throws {
+    nonisolated private func removeFavoriteInTransaction(uniqueId: String, db: Database) throws {
         try db.execute(
-            sql: "DELETE FROM favorite_books WHERE isbn = ?",
-            arguments: [isbn]
+            sql: "DELETE FROM favorite_books WHERE uniqueId = ?",
+            arguments: [uniqueId]
         )
     }
 }
 
-// MARK: - Dependencies Integration (Actor directly!)
+
 struct BookRepositoryKey: DependencyKey {
     static let liveValue: BookRepository = BookRepositoryActor()
 }

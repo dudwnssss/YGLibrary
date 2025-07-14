@@ -118,7 +118,7 @@ struct YGToolbarModifier: ViewModifier {
     let items: [YGToolbarItem]
     
     func body(content: Content) -> some View {
-        VStack(spacing: 0) {
+        VStack(spacing: .zero) {
             YGToolbar(height: height, items: items)
             content
         }

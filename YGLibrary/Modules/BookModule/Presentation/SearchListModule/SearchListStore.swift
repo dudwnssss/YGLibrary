@@ -31,12 +31,12 @@ final class SearchListStore: Store {
         var isError: Bool = false
         var query: String = ""
         var currentPage: Int = 1
-        var favoriteISBNs: Set<String> = []
+        var favoriteUniqueIds: Set<String> = []
         
         // 내부 상태 (UI에 영향 주지 않음)
-        private var seenISBNs: Set<String> = []
+        private var seenUniqueIds: Set<String> = []
         private var isLoadingNextPage: Bool = false // 중복 로딩 방지
-        private var lastTriggeredISBN: String = "" // 무한스크롤 중복 방지
+        private var lastTriggeredUniqueId: String = "" // 무한스크롤 중복 방지
         
         var hasNextPage: Bool {
             guard let meta else { return false }
@@ -48,7 +48,7 @@ final class SearchListStore: Store {
         }
         
         func isFavorite(_ book: Book) -> Bool {
-            return favoriteISBNs.contains(book.isbn)
+            return favoriteUniqueIds.contains(book.id)
         }
         
         // 성능 최적화: 증분 업데이트
@@ -56,8 +56,8 @@ final class SearchListStore: Store {
             var addedBooks: [Book] = []
             
             for book in newBooks {
-                if !seenISBNs.contains(book.isbn) {
-                    seenISBNs.insert(book.isbn)
+                if !seenUniqueIds.contains(book.id) {
+                    seenUniqueIds.insert(book.id)
                     addedBooks.append(book)
                 }
             }
@@ -68,13 +68,13 @@ final class SearchListStore: Store {
         }
         
         mutating func resetBooks(_ newBooks: [Book]) {
-            seenISBNs.removeAll()
+            seenUniqueIds.removeAll()
             books.removeAll()
-            lastTriggeredISBN = "" // 무한스크롤 상태 초기화
+            lastTriggeredUniqueId = "" // 무한스크롤 상태 초기화
             
             for book in newBooks {
-                if !seenISBNs.contains(book.isbn) {
-                    seenISBNs.insert(book.isbn)
+                if !seenUniqueIds.contains(book.id) {
+                    seenUniqueIds.insert(book.id)
                     books.append(book)
                 }
             }
@@ -88,14 +88,14 @@ final class SearchListStore: Store {
         mutating func checkInfiniteScrollTrigger(for book: Book) -> Bool {
             let booksCount = books.count
             
-            guard let bookIndex = books.firstIndex(where: { $0.isbn == book.isbn }),
+            guard let bookIndex = books.firstIndex(where: { $0.id == book.id }),
                   bookIndex >= max(0, booksCount - 3),
-                  book.isbn != lastTriggeredISBN,
+                  book.id != lastTriggeredUniqueId,
                   canLoadMore else {
                 return false
             }
             
-            lastTriggeredISBN = book.isbn
+            lastTriggeredUniqueId = book.id
             return true
         }
     }
@@ -123,10 +123,10 @@ final class SearchListStore: Store {
     }
     
     private func setSubscription() {
-        favoriteService.favoriteISBNs
+        favoriteService.favoriteUniqueIds
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] isbns in
-                self?.state.favoriteISBNs = isbns
+            .sink { [weak self] uniqueIds in
+                self?.state.favoriteUniqueIds = uniqueIds
             }
             .store(in: &cancellables)
     }
@@ -190,7 +190,7 @@ final class SearchListStore: Store {
         case .bookAppeared(let book):
             // 무한스크롤 로직을 Store에서 처리
             if state.checkInfiniteScrollTrigger(for: book) {
-                print("🚀 Infinite scroll triggered at book: \(book.title), ISBN: \(book.isbn)")
+                print("🚀 Infinite scroll triggered at book: \(book.title), UniqueId: \(book.id)")
                 dispatch(.loadNextPage)
             }
         }

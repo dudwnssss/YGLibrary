@@ -9,9 +9,10 @@ import SwiftUI
 
 struct SearchListView: View {
     @ObservedObject private var store = SearchListStore()
+    @ObservedObject private var networkMonitor = NetworkMonitor()
     
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: .zero) {
             // 검색바
             SearchBarView(query: store.query) { text in
                 store.dispatch(.search(text))
@@ -19,7 +20,11 @@ struct SearchListView: View {
             
             // 메인 콘텐츠
             Group {
-                if store.isLoading && store.state.books.isEmpty {
+                if !networkMonitor.isConnected {
+                    
+                    networkErrorView
+                    
+                } else if store.isLoading && store.state.books.isEmpty {
                     // 초기 로딩
                     loadingView
                     
@@ -51,7 +56,7 @@ struct SearchListView: View {
                 SearchSortView(store: store)
                 
                 // 책 목록
-                ForEach(store.state.books, id: \.isbn) { book in
+                ForEach(store.state.books, id: \.id) { book in
                     BookRowView(
                         book: book,
                         isFavorite: store.state.isFavorite(book),
@@ -93,9 +98,7 @@ struct SearchListView: View {
             .scrollDismissesKeyboard(.immediately)
         }
     }
-    
-    // MARK: - Subviews
-    
+        
     private var loadingView: some View {
         VStack(spacing: 16) {
             ProgressView()
@@ -103,6 +106,20 @@ struct SearchListView: View {
             Text("검색 중...")
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    private var networkErrorView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "network.slash")
+                .font(.system(size: 50, weight: .light))
+                .foregroundColor(.gray.opacity(0.6))
+            Text("네트워크 연결 상태를 확인해주세요")
+                .font(.system(size: 16))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .lineSpacing(2)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

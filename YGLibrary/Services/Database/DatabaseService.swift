@@ -10,7 +10,6 @@ import Foundation
 import GRDB
 import Dependencies
 
-// MARK: - Database Errors
 enum DatabaseError: Error, LocalizedError {
     case actorDeallocated
     case initializationFailed(String)
@@ -28,7 +27,6 @@ enum DatabaseError: Error, LocalizedError {
     }
 }
 
-// MARK: - Actor-based DatabaseService (No Wrapper Needed!)
 actor DatabaseService {
     private let dbQueue: DatabaseQueue
     
@@ -66,14 +64,15 @@ actor DatabaseService {
             }
         }
     }
-    
-    // MARK: - Private Methods
-    
+}
+
+extension DatabaseService {
     nonisolated private static func createTables(in dbQueue: DatabaseQueue) throws {
         try dbQueue.write { db in
             try db.create(table: "favorite_books", ifNotExists: true) { t in
                 t.autoIncrementedPrimaryKey("id")
-                t.column("isbn", .text).notNull().unique(onConflict: .replace)
+                t.column("uniqueId", .text).notNull().unique(onConflict: .replace)
+                t.column("isbn", .text).notNull()
                 t.column("title", .text).notNull()
                 t.column("authors", .blob).notNull()
                 t.column("publisher", .text).notNull()
@@ -89,6 +88,7 @@ actor DatabaseService {
             }
             
             // Create indexes for better performance
+            try db.create(index: "idx_uniqueId", on: "favorite_books", columns: ["uniqueId"], ifNotExists: true)
             try db.create(index: "idx_isbn", on: "favorite_books", columns: ["isbn"], ifNotExists: true)
             try db.create(index: "idx_title", on: "favorite_books", columns: ["title"], ifNotExists: true)
         }

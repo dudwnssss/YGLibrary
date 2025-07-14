@@ -29,7 +29,7 @@ struct PriceFilterBottomSheetView: View {
     ]
     
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: .zero) {
             // 상단 핸들
             RoundedRectangle(cornerRadius: 2.5)
                 .fill(Color.gray.opacity(0.3))

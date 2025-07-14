@@ -41,11 +41,11 @@ final class BookDetailStore: Store {
     }
     
     private func setSubscription() {
-        favoriteService.favoriteISBNs
+        favoriteService.favoriteUniqueIds
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] isbns in
+            .sink { [weak self] ids in
                 guard let self else { return }
-                state.isFavorite = isbns.contains(state.book.isbn)
+                state.isFavorite = ids.contains(state.book.id)
             }
             .store(in: &cancellables)
     }
@@ -53,7 +53,7 @@ final class BookDetailStore: Store {
     func dispatch(_ action: Action) {
         switch action {
         case .onAppear:
-            state.isFavorite = favoriteService.isFavorite(isbn: state.book.isbn)
+            state.isFavorite = favoriteService.isFavorite(uniqueId: state.book.id)
         case .toggleFavorite:
             // Actor handles concurrency automatically
             Task {

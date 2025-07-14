@@ -46,6 +46,9 @@ struct NetworkServiceImpl: NetworkService {
 
     init(session: URLSession = .shared, timeout: TimeInterval = 30.0) {
         let config = URLSessionConfiguration.default
+        #if DEBUG
+        config.protocolClasses = [APIMockingProtocol.self] + (config.protocolClasses ?? [])
+        #endif
         config.timeoutIntervalForRequest = timeout
         config.timeoutIntervalForResource = timeout
         

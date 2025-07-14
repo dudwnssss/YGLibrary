@@ -21,6 +21,9 @@ final class MainTabBarController: UITabBarController {
         delegate = self
         setupTabs()
         configure()
+        #if DEBUG
+        APIMockingTool.shared.setup()
+        #endif
     }
     
     private func setupTabs() {

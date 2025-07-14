@@ -91,7 +91,7 @@ struct HighlightedText: View {
 }
 
 #Preview {
-    VStack(spacing: 0) {
+    VStack(spacing: .zero) {
         SearchSuggestionRowView(
             suggestion: SearchSuggestion(
                 id: "1",

@@ -11,6 +11,7 @@ import GRDB
 
 struct FavoriteBook: Codable,  FetchableRecord, MutablePersistableRecord {
     var id: Int64?
+    let uniqueId: String  // 새로운 고유 식별자
     let isbn: String
     let title: String
     let authors: [String]
@@ -35,6 +36,7 @@ struct FavoriteBook: Codable,  FetchableRecord, MutablePersistableRecord {
 extension FavoriteBook {
     init(from book: Book) {
         self.id = nil
+        self.uniqueId = book.id
         self.isbn = book.isbn
         self.title = book.title
         self.authors = book.authors

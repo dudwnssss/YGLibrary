@@ -22,13 +22,15 @@ struct BookDetailView: View {
                 bookDetailsSection
                 
                 // 책 소개 섹션
-                bookDescriptionSection
+                if store.book.hasContents {
+                    bookDescriptionSection
+                }
             }
             .padding(20)
         }
         .background(Color(UIColor.systemBackground))
         .ygToolbar {
-            YGToolbarItem.leading {
+            .leading {
                 Button(action: {
                     store.dispatch(.pop)
                 }) {
@@ -36,6 +38,7 @@ struct BookDetailView: View {
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.primary)
                 }
+                .buttonStyle(YGScaleButtonStyle(cornerRadius: 22))
             }
             
             YGToolbarItem.trailing {
@@ -46,8 +49,8 @@ struct BookDetailView: View {
                         .font(.system(size: 18, weight: .medium))
                         .foregroundColor(store.state.isFavorite ? .red : .gray)
                 }
-                .disabled(store.state.isLoading)
-                .opacity(store.state.isLoading ? 0.6 : 1.0)
+                .disabled(store.isLoading)
+                .buttonStyle(YGScaleButtonStyle(cornerRadius: 22))
             }
         }
         .onAppear {
@@ -135,7 +138,7 @@ struct BookDetailView: View {
             }
             
             // 정보 카드
-            VStack(spacing: 0) {
+            VStack(spacing: .zero) {
                 DetailRowView(label: "ISBN", value: store.state.book.isbn)
                 
                 Divider()
@@ -191,7 +194,7 @@ struct BookDetailView: View {
     }
 }
 
-struct DetailRowView: View {
+private struct DetailRowView: View {
     let label: String
     let value: String
     var valueColor: Color = .primary

@@ -11,53 +11,24 @@ struct FavoriteListView: View {
     @StateObject var store = FavoriteListStore()
     
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: .zero) {
             searchButtonView
             
             Group {
                 if store.state.isLoading {
-                    VStack(spacing: 16) {
-                        ProgressView()
-                            .scaleEffect(1.2)
-                        Text("즐겨찾기 불러오는 중...")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    loadingView
                     
-                } else if store.state.allBooks.isEmpty {
-                    // 즐겨찾기가 전혀 없는 상태
+                } else if store.allBooks.isEmpty {
+                    // 즐겨찾기가 없음
                     emptyFavoritesView
                     
-                } else if store.state.books.isEmpty && !store.state.query.isEmpty {
+                } else if store.books.isEmpty && !store.query.isEmpty {
                     // 검색 결과 없음
                     emptyFilterView
                     
                 } else {
                     // 즐겨찾기 리스트
-                    List {
-                        FavoriteSortFilterView(store: store)
-                        ForEach(store.state.books, id: \.isbn) { book in
-                            BookRowView(
-                                book: book,
-                                isFavorite: store.state.isFavorite(book),
-                                onTap: {
-                                    store.dispatch(.navigateToDetail(book))
-                                },
-                                onFavoriteToggle: {
-                                    store.dispatch(.toggleFavorite(book))
-                                }
-                            )
-                            .listRowSeparator(.hidden)
-                            .listRowBackground(Color.clear)
-                            .listRowInsets(.init(top: 6, leading: 16, bottom: 6, trailing: 16))
-                        }
-                    }
-                    .listStyle(PlainListStyle())
-                    .scrollDismissesKeyboard(.immediately)
-                    .refreshable {
-                        store.dispatch(.onAppear)
-                    }
+                    contentView
                 }
             }
         }
@@ -73,7 +44,43 @@ struct FavoriteListView: View {
         }
     }
     
-    // MARK: - Subviews
+    private var contentView: some View {
+        List {
+            FavoriteSortFilterView(store: store)
+            ForEach(store.books, id: \.id) { book in
+                BookRowView(
+                    book: book,
+                    isFavorite: store.state.isFavorite(book),
+                    onTap: {
+                        store.dispatch(.navigateToDetail(book))
+                    },
+                    onFavoriteToggle: {
+                        store.dispatch(.toggleFavorite(book))
+                    }
+                )
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+                .listRowInsets(.init(top: 6, leading: 16, bottom: 6, trailing: 16))
+            }
+        }
+        .listStyle(PlainListStyle())
+        .background(Color(uiColor: .systemGray6))
+        .scrollDismissesKeyboard(.immediately)
+        .refreshable {
+            store.dispatch(.onAppear)
+        }
+    }
+    
+    private var loadingView: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .scaleEffect(1.2)
+            Text("즐겨찾기 불러오는 중...")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
     
     private var emptyFavoritesView: some View {
         VStack(spacing: 20) {
@@ -107,20 +114,20 @@ struct FavoriteListView: View {
                        .font(.system(size: 20, weight: .semibold))
                        .foregroundColor(.primary)
                    
-                   if !store.state.query.isEmpty && store.state.priceFilter.isEnabled {
-                       Text("'\(store.state.query)' 검색어와 \(store.state.priceFilter.displayText) 조건에 맞는 책이 없습니다")
+                   if !store.query.isEmpty && store.priceFilter.isEnabled {
+                       Text("'\(store.query)' 검색어와 \(store.priceFilter.displayText) 조건에 맞는 책이 없습니다")
                            .font(.system(size: 16))
                            .foregroundColor(.secondary)
                            .multilineTextAlignment(.center)
                            .lineSpacing(2)
-                   } else if !store.state.query.isEmpty {
-                       Text("'\(store.state.query)'와 일치하는 즐겨찾기 책이 없습니다")
+                   } else if !store.query.isEmpty {
+                       Text("'\(store.query)'와 일치하는 즐겨찾기 책이 없습니다")
                            .font(.system(size: 16))
                            .foregroundColor(.secondary)
                            .multilineTextAlignment(.center)
                            .lineSpacing(2)
-                   } else if store.state.priceFilter.isEnabled {
-                       Text("\(store.state.priceFilter.displayText) 범위에 맞는 책이 없습니다")
+                   } else if store.priceFilter.isEnabled {
+                       Text("\(store.priceFilter.displayText) 범위에 맞는 책이 없습니다")
                            .font(.system(size: 16))
                            .foregroundColor(.secondary)
                            .multilineTextAlignment(.center)
@@ -130,9 +137,7 @@ struct FavoriteListView: View {
            }
            .frame(maxWidth: .infinity, maxHeight: .infinity)
        }
-    
-    // MARK: - Search Button View
-    
+        
     private var searchButtonView: some View {
         Button(action: {
             store.dispatch(.openSearchModal)
@@ -143,18 +148,18 @@ struct FavoriteListView: View {
                     .foregroundColor(.secondary)
                 
                 HStack {
-                    if store.state.query.isEmpty {
+                    if store.query.isEmpty {
                         Text("제목 또는 저자를 입력하세요")
                             .foregroundColor(.secondary)
                     } else {
-                        Text(store.state.query)
+                        Text(store.query)
                             .foregroundColor(.primary)
                     }
                     Spacer()
                 }
                 .font(.system(size: 16))
                 
-                if !store.state.query.isEmpty {
+                if !store.query.isEmpty {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 16))
                         .foregroundColor(.secondary)

@@ -26,7 +26,8 @@ struct ModuleFactoryImpl: ModuleFactory {
     func makeModule(for destination: Destination) -> UIViewController {
         switch destination {
         case .mainTab:
-            return MainTabBarController()
+            let vc = MainTabBarController()
+            return vc
             
         case .bookDetail(let book):
             let store = BookDetailStore(book: book)

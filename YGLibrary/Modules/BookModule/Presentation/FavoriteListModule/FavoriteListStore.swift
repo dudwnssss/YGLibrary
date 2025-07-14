@@ -27,13 +27,13 @@ final class FavoriteListStore: Store {
         var books: [Book] = []              // 필터링/정렬된 결과
         var isLoading: Bool = false
         var isError: Bool = false
-        var favoriteISBNs: Set<String> = []
+        var favoriteUniqueIds: Set<String> = []
         var query: String = ""              // 검색어
         var sortType: FavoriteSortType = .ascending // 정렬 타입
         var priceFilter: PriceFilter = PriceFilter() // 가격 필터
         
         func isFavorite(_ book: Book) -> Bool {
-            return favoriteISBNs.contains(book.isbn)
+            return favoriteUniqueIds.contains(book.id)
         }
     }
     
@@ -98,10 +98,10 @@ final class FavoriteListStore: Store {
 
 extension FavoriteListStore {
     private func setSubscription() {
-        favoriteService.favoriteISBNs
+        favoriteService.favoriteUniqueIds
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] isbns in
-                self?.state.favoriteISBNs = isbns
+            .sink { [weak self] uniqueIds in
+                self?.state.favoriteUniqueIds = uniqueIds
             }
             .store(in: &cancellables)
     }
@@ -200,7 +200,7 @@ extension FavoriteListStore {
                 if isFavorite {
                     toast.showAddFavorite()
                     // 새로 추가된 경우에만 즉시 UI에 추가
-                    if !state.allBooks.contains(where: { $0.isbn == book.isbn }) {
+                    if !state.allBooks.contains(where: { $0.id == book.id }) {
                         state.allBooks.append(book)
                         applyFiltersAndSort()
                     }
